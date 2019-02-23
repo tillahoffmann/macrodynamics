@@ -1,0 +1,7 @@
+-e .[tests]
+networkx
+jupyterlab
+pyshp
+shapely
+pyproj
+pylint
