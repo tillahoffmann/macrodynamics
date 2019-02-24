@@ -66,7 +66,7 @@ class ContinuousOperator(Operator):
             (self.shape, self.kernel.shape)
 
     @classmethod
-    def from_scalar(cls, weight, kernel, kernel_weight_x, kernel_weight_y, dx):
+    def from_matrix(cls, weight, kernel, kernel_weight_x, kernel_weight_y, dx):
         args = [add_leading_dims(x, 2) for x in [weight, kernel, kernel_weight_x, kernel_weight_y]]
         return cls(*args, dx)
 

@@ -1,5 +1,5 @@
 import numpy as np
-import scipy.sparse
+from scipy import sparse
 
 from ..structure import evaluate_expected_degree
 from .discrete import DiscreteOperator
@@ -24,7 +24,8 @@ def evaluate_discrete_operator(adjacency, angular_frequency=1, **kwargs):
     """
     n = adjacency.shape[0]
     in_degree = adjacency.sum(axis=1)
-    assert not scipy.sparse.issparse(adjacency), "adjacency must not be sparse"
+    if sparse.issparse(adjacency):
+        raise NotImplementedError("adjacency must not be sparse")
 
     tensor = np.asarray([
         (np.zeros((n, n)), np.eye(n)),  # displacement

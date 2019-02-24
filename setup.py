@@ -4,6 +4,7 @@ import os
 from setuptools import setup, find_packages
 from setuptools.extension import Extension
 
+# Determine whether to use the trans-compiled *.c files or start from *.pyx
 USE_CYTHON = os.environ.get('USE_CYTHON')
 if USE_CYTHON:
     if USE_CYTHON.lower() == 'false':
@@ -19,6 +20,7 @@ else:
     except ImportError:
         USE_CYTHON = False
 
+# Generate extensions
 ext = ".pyx" if USE_CYTHON else ".c"
 filenames = glob.glob("graph_dynamics/*" + ext)
 ext_modules = [Extension(os.path.splitext(filename)[0].replace("/", "."), [filename])

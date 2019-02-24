@@ -3,6 +3,7 @@ import pytest
 import graph_dynamics as gd
 import numpy as np
 from matplotlib import colors as mcolors
+from scipy import sparse
 
 
 @pytest.mark.parametrize('statistic', ['count', 'sum', 'mean', 'var'])
@@ -114,8 +115,9 @@ def test_edgelist_to_sparse(weight):
     dense = np.zeros((num_nodes, num_nodes))
     i, j = edgelist.T
     dense[i, j] = 1 if weight is None else weight
-    sparse = gd.edgelist_to_sparse(edgelist, num_nodes, weight)
-    np.testing.assert_allclose(sparse.toarray(), dense, err_msg='unexpected sparse adjacency')
+    sparse_ = gd.edgelist_to_sparse(edgelist, num_nodes, weight)
+    assert sparse.issparse(sparse_)
+    np.testing.assert_allclose(sparse_.toarray(), dense, err_msg='unexpected sparse adjacency')
 
 
 def test_add_leading_dims():
