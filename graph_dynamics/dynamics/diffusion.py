@@ -1,5 +1,5 @@
 import numpy as np
-import scipy.sparse
+from scipy import sparse
 
 from ..structure import evaluate_expected_degree
 from .discrete import DiscreteOperator
@@ -21,11 +21,11 @@ def evaluate_discrete_operator(adjacency):
         differential operator for diffusion
     """
     out_degree = adjacency.sum(axis=0)
-    if scipy.sparse.issparse(adjacency):
-        diag = scipy.sparse.spdiags(out_degree, 0, adjacency.shape[0], adjacency.shape[1])
+    if sparse.issparse(adjacency):
+        diag = sparse.spdiags(out_degree, 0, adjacency.shape[0], adjacency.shape[1])
     else:
         diag = np.diag(out_degree)
-    return DiscreteOperator.from_scalar(adjacency - diag)
+    return DiscreteOperator.from_matrix(adjacency - diag)
 
 
 def evaluate_continuous_operator(connectivity, density, dx):
@@ -54,4 +54,4 @@ def evaluate_continuous_operator(connectivity, density, dx):
     # The elementwise kernel weight is not relevant
     kernel_weight_x = np.ones_like(density)
 
-    return ContinuousOperator.from_scalar(weight, kernel, kernel_weight_x, kernel_weight_y, dx)
+    return ContinuousOperator.from_matrix(weight, kernel, kernel_weight_x, kernel_weight_y, dx)

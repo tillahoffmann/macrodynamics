@@ -1,5 +1,5 @@
 import numpy as np
-import scipy.sparse
+from scipy import sparse
 
 from ..structure import evaluate_expected_degree
 from .discrete import DiscreteOperator
@@ -24,14 +24,18 @@ def evaluate_discrete_operator(adjacency, angular_frequency=1, **kwargs):
     """
     n = adjacency.shape[0]
     in_degree = adjacency.sum(axis=1)
-    assert not scipy.sparse.issparse(adjacency), "adjacency must not be sparse"
+    if sparse.issparse(adjacency):
+        tensor = [
+            (None, sparse.eye(n)),  # displacement
+            (-sparse.spdiags(in_degree.T + angular_frequency ** 2, 0, n, n) + adjacency, None)  # velocity
+        ]
+    else:
+        tensor = [
+            (np.zeros((n, n)), np.eye(n)),  # displacement
+            (-np.diag(in_degree + angular_frequency ** 2) + adjacency, np.zeros((n, n)))  # velocity
+        ]
 
-    tensor = np.asarray([
-        (np.zeros((n, n)), np.eye(n)),  # displacement
-        (-np.diag(in_degree + angular_frequency ** 2) + adjacency, np.zeros((n, n)))  # velocity
-    ])
-
-    return DiscreteOperator(tensor, **kwargs)
+    return DiscreteOperator.from_tensor(tensor, **kwargs)
 
 
 def evaluate_continuous_operator(connectivity, density, dx, angular_frequency=1, **kwargs):

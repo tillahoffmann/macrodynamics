@@ -27,7 +27,8 @@ class Operator:
 
         Notes
         -----
-        If `evaluate_gradient` does not depend on `t`, the corresponding differential equation is homogeneous.
+        If `evaluate_gradient` does not depend on `t`, the corresponding differential equation is
+        homogeneous.
         """
         raise NotImplementedError
 
@@ -50,6 +51,10 @@ class Operator:
         raise NotImplementedError
 
     def _evaluate_flat_gradient(self, t, z, callback=None):
+        """
+        Helper function to reshape `z` to the same shape as the state vector associated with this
+        operator if necessary, compute the time derivative, and flatten the gradient.
+        """
         z = np.reshape(z, self.shape)
         grad = self.evaluate_gradient(z, t)
         if callback:
@@ -57,6 +62,10 @@ class Operator:
         return grad.ravel()
 
     def _assert_valid_shape(self, z):
+        """
+        Helper function to assert that `z` has the same shape as the state vector associated with
+        this operator.
+        """
         z = np.asarray(z)
         assert z.shape == self.shape, "expected state shape `%s` but got `%s`" % \
             (self.shape, z.shape)
@@ -115,6 +124,11 @@ class Operator:
         -------
         z : np.ndarray
             solution of `z` for each `t`
+
+        Notes
+        -----
+        This function is expected to perform worse in terms of performance and accuracy than
+        `integrate_numeric`.
         """
         self._assert_valid_shape(z)
         zs = [z]
@@ -124,8 +138,7 @@ class Operator:
         previous_time = t[0]
         for time in tqdm(t[1:]) if tqdm else t[1:]:
             grad = self.evaluate_gradient(z, time)
-            assert z.shape == grad.shape, "state has shape `%s` but gradient has shape `%s`" % \
-                (z.shape, grad.shape)
+            self._assert_valid_shape(grad)
             z = z + (time - previous_time) * grad
             zs.append(z.copy())
             previous_time = time

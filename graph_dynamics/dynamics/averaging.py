@@ -1,5 +1,5 @@
 import numpy as np
-import scipy.sparse
+from scipy import sparse
 
 from ..structure import evaluate_expected_degree
 from .discrete import DiscreteOperator
@@ -24,11 +24,11 @@ def evaluate_discrete_operator(adjacency):
     in_degree = adjacency.sum(axis=1)
     # Replace zeros by ones because the corresponding row will only contain zeros anyway and we don't want nans
     in_degree = np.where(in_degree > 0, in_degree, 1).astype(float)
-    if scipy.sparse.issparse(adjacency):
-        matrix = adjacency / in_degree - scipy.sparse.spdiags(np.ones(n), 0, n, n)
+    if sparse.issparse(adjacency):
+        matrix = adjacency / in_degree - sparse.spdiags(np.ones(n), 0, n, n)
     else:
         matrix = adjacency / in_degree[:, None] - np.eye(n)
-    return DiscreteOperator.from_scalar(matrix)
+    return DiscreteOperator.from_matrix(matrix)
 
 
 def evaluate_continuous_operator(connectivity, density, dx):
@@ -58,4 +58,4 @@ def evaluate_continuous_operator(connectivity, density, dx):
     # between the average and the current position
     weight = - np.ones_like(density)
 
-    return ContinuousOperator.from_scalar(weight, kernel, kernel_weight_x, kernel_weight_y, dx)
+    return ContinuousOperator.from_matrix(weight, kernel, kernel_weight_x, kernel_weight_y, dx)

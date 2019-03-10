@@ -12,4 +12,4 @@ clean :
 	rm -f **/*.so
 
 tests :
-	py.test tests --cov=graph_dynamics --cov-report=html --cov-report=term-missing
+	py.test tests --lf --cov=graph_dynamics --cov-report=html --cov-report=term-missing

@@ -3,7 +3,7 @@ import numpy as np
 from matplotlib import cm
 from matplotlib import colors as mcolors
 from scipy.fftpack.helper import next_fast_len
-import scipy.sparse
+from scipy import sparse
 from ._util import smoothed_sum
 
 
@@ -150,7 +150,7 @@ def lazy_property(func):
     @ft.wraps(func)
     def _wrapper(self):
         # Try to get the value
-        _name = '_%s' % func.__name__
+        _name = '__lazy_%s' % func.__name__
         if getattr(self, _name, None) is None:
             # Evaluate if necessary
             setattr(self, _name, func(self))
@@ -314,7 +314,7 @@ def to_array(arr):
     """
     Convert to a dense array.
     """
-    if scipy.sparse.issparse(arr):
+    if sparse.issparse(arr):
         return arr.toarray()
     return arr
 
@@ -334,14 +334,15 @@ def edgelist_to_sparse(edgelist, shape=None, weight=None):
 
     Returns
     -------
-    sparse : coo_matrix
+    sparse : csr_matrix
         sparse adjacency matrix
     """
     if isinstance(shape, int):
         shape = (shape, shape)
     if weight is None:
         weight = np.ones(len(edgelist))
-    return scipy.sparse.coo_matrix((weight, np.transpose(edgelist)), shape)
+    adjacency = sparse.coo_matrix((weight, np.transpose(edgelist)), shape)
+    return adjacency.tocsr()
 
 
 def add_leading_dims(x, n):

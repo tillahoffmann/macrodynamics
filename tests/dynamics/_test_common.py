@@ -28,6 +28,8 @@ def _test_integration_shape(operator, integration_method, time):
         with pytest.raises(ValueError):
             operator.integrate(z0, time, integration_method)
     else:
+        if np.isscalar(time) and integration_method == 'naive':
+            pytest.skip("naive integration requires a vector of time points")
         z = operator.integrate(z0, time, integration_method)
         if np.isscalar(time):
             assert z.shape == z0.shape, "output shape does not match input shape"
