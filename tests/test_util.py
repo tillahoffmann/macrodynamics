@@ -132,3 +132,26 @@ def test_symmetric_vminmax():
     x = np.random.normal(0, 1, (30, 40))
     kwargs = gd.symmetric_vminmax(*x)
     assert kwargs['vmax'] == np.abs(x).max()
+
+
+def test_use_bmat_for_matrix_construction():
+    """
+    This test does not test any code in the module but is retained to ensure that code changes
+    as a result of https://stackoverflow.com/questions/55081721/stacking-sparse-matrices do not
+    introduce regressions.
+    """
+    tensor = np.random.normal(0, 1, (5, 5, 10, 10))
+    # Use our custom legacy implementation
+    assert tensor.ndim == 4, "expected 4D tensor but got %dD" % tensor.ndim
+    state_shape = tensor.shape[1:3]
+    # Flatten the tensor
+    matrix_rank = np.prod(state_shape)
+    matrix = np.rollaxis(tensor, 2, 1).reshape((matrix_rank, matrix_rank))
+    # Use bmat instead
+    blocks = list(map(list,tensor))
+    matrix2 = np.block(blocks)
+    np.testing.assert_equal(matrix, matrix2)
+    # Try the same with a sparse matrix
+    blocks = [[sparse.csr_matrix(block) for block in row] for row in blocks]
+    matrix3 = sparse.bmat(blocks).toarray()
+    np.testing.assert_equal(matrix3, matrix2)

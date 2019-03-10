@@ -25,14 +25,17 @@ def evaluate_discrete_operator(adjacency, angular_frequency=1, **kwargs):
     n = adjacency.shape[0]
     in_degree = adjacency.sum(axis=1)
     if sparse.issparse(adjacency):
-        raise NotImplementedError("adjacency must not be sparse")
+        tensor = [
+            (None, sparse.eye(n)),  # displacement
+            (-sparse.spdiags(in_degree.T + angular_frequency ** 2, 0, n, n) + adjacency, None)  # velocity
+        ]
+    else:
+        tensor = [
+            (np.zeros((n, n)), np.eye(n)),  # displacement
+            (-np.diag(in_degree + angular_frequency ** 2) + adjacency, np.zeros((n, n)))  # velocity
+        ]
 
-    tensor = np.asarray([
-        (np.zeros((n, n)), np.eye(n)),  # displacement
-        (-np.diag(in_degree + angular_frequency ** 2) + adjacency, np.zeros((n, n)))  # velocity
-    ])
-
-    return DiscreteOperator(tensor, **kwargs)
+    return DiscreteOperator.from_tensor(tensor, **kwargs)
 
 
 def evaluate_continuous_operator(connectivity, density, dx, angular_frequency=1, **kwargs):

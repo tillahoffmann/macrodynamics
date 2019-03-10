@@ -38,19 +38,34 @@ class DiscreteOperator(Operator):
 
         Parameters
         ----------
-        tensor : np.ndarray
-            evolution tensor with shape `(k, k, n, n)` for vector dynamics, where `n` is the
-            number of nodes and `k` is the number of state variables
+        tensor : list
+            list of lists of matrices constituting an evolution tensor with shape `(k, k, n, n)` for
+            vector dynamics, where `n` is the number of nodes and `k` is the number of state
+            variables
         """
-        tensor = np.asarray(tensor)
-        assert tensor.ndim == 4, "expected 4D tensor but got %dD" % tensor.ndim
-        assert is_homogeneous(tensor.shape[:2]) and is_homogeneous(tensor.shape[2:]), \
-            "expected a tensor with shape (k, k, n, n) but got %s" % (tensor.shape, )
-        state_shape = tensor.shape[1:3]
-        # Flatten the tensor
-        matrix_rank = np.prod(state_shape)
-        matrix = np.rollaxis(tensor, 2, 1).reshape((matrix_rank, matrix_rank))
-        return cls(matrix, state_shape)
+        # Ensure the tensor appears as a list of lists with the right shapes
+        k = len(tensor)
+        n = None
+        blocks = []
+        issparse = False
+        for row in tensor:
+            assert len(row) == k
+            tmp = []
+            for block in row:
+                if block is not None:
+                    if n is None:
+                        n = block.shape[0]
+                    assert block.shape == (n, n)
+                    issparse |= sparse.issparse(block)
+                tmp.append(block)
+            blocks.append(tmp)
+
+        # Construct the evoluation matrix
+        if issparse:
+            matrix = sparse.bmat(blocks).tocsr()
+        else:
+            matrix = np.block(blocks)
+        return cls(matrix, (k, n))
 
     @classmethod
     def from_matrix(cls, matrix):

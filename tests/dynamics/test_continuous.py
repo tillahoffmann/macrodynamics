@@ -65,6 +65,11 @@ def continuous_averaging_operator(connectivity, density, lin_dx):
     return gd.averaging.evaluate_continuous_operator(connectivity, density, lin_dx)
 
 
+@pytest.fixture
+def continuous_oscillation_operator(connectivity, density, lin_dx):
+    return gd.oscillation.evaluate_continuous_operator(connectivity, density, lin_dx)
+
+
 def test_density(density, lin_dx):
     np.testing.assert_array_less(0, density, "density is negative")
     np.testing.assert_allclose(np.sum(density) * lin_dx ** np.ndim(density), num_nodes,
@@ -121,3 +126,7 @@ def test_continuous_diffusion_integration(continuous_diffusion_operator, density
 
 def test_continuous_diffusion_integration_shape(continuous_diffusion_operator, integration_method, time):
     _test_integration_shape(continuous_diffusion_operator, integration_method, time)
+
+
+def test_continous_oscillation_operator(continuous_oscillation_operator, density):
+    pass

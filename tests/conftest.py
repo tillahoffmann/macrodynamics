@@ -1,5 +1,14 @@
 import functools as ft
 import graph_dynamics as gd
+import numpy as np
+import pytest
+
+SEED = np.random.randint(2**16)
+
+@pytest.fixture(autouse=True)
+def seed_rng(request):
+    np.random.seed(SEED)
+
 
 # Define general fixtures
 kernel = gd.list_fixture([
@@ -16,9 +25,9 @@ kernel = gd.list_fixture([
 
 num_dims = gd.list_fixture([1, 2])
 
-integration_method = gd.list_fixture(['analytic', 'numeric'])
+integration_method = gd.list_fixture(['analytic', 'numeric', 'naive'])
 
-time = gd.list_fixture([1, [0, 0.5, 1]])
+time = gd.list_fixture([1, [0, 0.25, 0.5, 0.75, 1]])
 
 periodic = gd.list_fixture([True, False], ['periodic', 'non-periodic'])
 
