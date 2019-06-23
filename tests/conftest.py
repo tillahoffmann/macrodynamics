@@ -1,7 +1,10 @@
 import functools as ft
-import graph_dynamics as gd
+import matplotlib as mpl
+mpl.use('Agg')
 import numpy as np
 import pytest
+import graph_dynamics as gd
+
 
 SEED = np.random.randint(2**16)
 
