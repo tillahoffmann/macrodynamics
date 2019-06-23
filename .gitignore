@@ -107,3 +107,4 @@ venv.bak/
 .vscode/
 graph_dynamics/**/*.html
 *.tmp
+playground

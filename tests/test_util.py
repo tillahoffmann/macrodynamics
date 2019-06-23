@@ -3,6 +3,7 @@ import pytest
 import graph_dynamics as gd
 import numpy as np
 from matplotlib import colors as mcolors
+from matplotlib import pyplot as plt
 from scipy import sparse
 
 
@@ -155,3 +156,17 @@ def test_use_bmat_for_matrix_construction():
     blocks = [[sparse.csr_matrix(block) for block in row] for row in blocks]
     matrix3 = sparse.bmat(blocks).toarray()
     np.testing.assert_equal(matrix3, matrix2)
+
+
+def test_plot_edges():
+    plt.subplots()
+    x = np.random.normal(0, 1, (100, 2))
+    edgelist = np.random.randint(x.shape[0], size=(50, 2))
+    collection = gd.plot_edges(x, edgelist)
+    assert len(collection.get_segments()) == 50
+
+
+def test_label_axes():
+    fig, axes = plt.subplots(2, 2)
+    assert len(gd.label_axes(axes)) == 4
+    assert len(gd.label_axes(*axes)) == 4

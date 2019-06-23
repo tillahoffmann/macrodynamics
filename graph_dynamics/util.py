@@ -2,6 +2,8 @@ import functools as ft
 import numpy as np
 from matplotlib import cm
 from matplotlib import colors as mcolors
+from matplotlib import pyplot as plt
+from matplotlib import collections as mcollections
 from scipy.fftpack.helper import next_fast_len
 from scipy import sparse
 from ._util import smoothed_sum
@@ -351,3 +353,46 @@ def add_leading_dims(x, n):
     """
     x = np.asarray(x)
     return x.reshape((1,) * n + x.shape)
+
+
+def plot_edges(x, edges, ax=None, **kwargs):
+    """
+    Plot edges.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        positions of nodes
+    edges : np.ndarray
+        edgelist
+    **kwargs : dict
+        parameters passed to the `LineCollection` created by this function
+
+    Returns
+    -------
+    collection : LineCollection
+        collection of edges
+    """
+    default_kwargs = {
+        'color': 'k',
+        'alpha': 0.5,
+        'zorder': 1,
+    }
+    default_kwargs.update(kwargs)
+    ax = ax or plt.gca()
+    segments = [[x[i], x[j]] for i, j in edges]
+    collection = mcollections.LineCollection(segments, **default_kwargs)
+    ax.add_collection(collection)
+    return collection
+
+
+def label_axes(*axes, x=0.05, y=0.95, va='top', offset=0, labels=None, **kwargs):
+    """
+    Attach alphabetical labels to a sequence of axes.
+    """
+    labels = labels or 'abcdefghijklmnopqrstuvwxyz'
+    elements = []
+    for i, ax in enumerate(np.ravel(axes)):
+        elements.append(ax.text(x, y, f'({labels[i + offset]})', va=va, transform=ax.transAxes,
+                        **kwargs))
+    return elements
