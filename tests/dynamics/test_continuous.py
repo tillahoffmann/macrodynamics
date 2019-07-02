@@ -61,6 +61,12 @@ def continuous_diffusion_operator(connectivity, density, lin_dx):
 
 
 @pytest.fixture
+def continuous_diffusion_operator_with_control(connectivity, density, lin_dx):
+    control = np.pi * np.ones_like(density)[None]
+    return gd.diffusion.evaluate_continuous_operator(connectivity, density, lin_dx, control=control)
+
+
+@pytest.fixture
 def continuous_averaging_operator(connectivity, density, lin_dx):
     return gd.averaging.evaluate_continuous_operator(connectivity, density, lin_dx)
 
@@ -122,6 +128,18 @@ def test_continuous_diffusion_integration(continuous_diffusion_operator, density
         err_msg="diffusion substance not conserved"
     )
     # TODO: compare with reference
+
+
+def test_continuous_diffusion_integration_with_control(continuous_diffusion_operator_with_control,
+                                                       density, initial_conditions):
+    _, z_numeric, _ = _test_integration(continuous_diffusion_operator_with_control,
+                                        initial_conditions, time=np.sqrt(2))
+    # Ensure the diffusion substance is conserved
+    np.testing.assert_allclose(
+        np.mean((initial_conditions + np.pi * np.sqrt(2)) * density),
+        np.mean(z_numeric * density),
+        err_msg="diffusion substance not conserved (subject to control)"
+    )
 
 
 def test_continuous_diffusion_integration_shape(continuous_diffusion_operator, integration_method, time):
