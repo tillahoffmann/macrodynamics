@@ -50,11 +50,13 @@ def evaluate_continuous_operator(connectivity, density, dx, angular_frequency=1,
         density of nodes (use a scalar for uniform densities)
     dx : np.ndarray or float
         spacing of sample points
+    **kwargs : dict
+        additional keyword arguments passed to `ContinuousOperator`
 
     Returns
     -------
     operator : ContinuousOperator
-        differential operator for opinion averaging
+        differential operator for coupled oscillators
     """
     weight = [
         (
