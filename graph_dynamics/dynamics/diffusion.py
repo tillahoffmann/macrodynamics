@@ -4,8 +4,10 @@ from scipy import sparse
 from ..structure import evaluate_expected_degree
 from .discrete import DiscreteOperator
 from .continuous import ContinuousOperator
+from ..util import ignore_scipy_issue_9093
 
 
+@ignore_scipy_issue_9093
 def evaluate_discrete_operator(adjacency):
     """
     Evaluate the differential operator for diffusion on a graph.
