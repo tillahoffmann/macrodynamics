@@ -128,5 +128,8 @@ def test_continuous_diffusion_integration_shape(continuous_diffusion_operator, i
     _test_integration_shape(continuous_diffusion_operator, integration_method, time)
 
 
-def test_continous_oscillation_operator(continuous_oscillation_operator, density):
-    pass
+def test_continous_oscillation_operator(continuous_oscillation_operator, density, coordinate_tensor,
+                                        num_dims, periodic):
+    center = np.random.uniform(0, 1, num_dims)
+    ic = gd.evaluate_gaussian_kernel(coordinate_tensor, center, 1, 0.05 ** 2)
+    _test_integration(continuous_oscillation_operator, [ic, np.zeros_like(ic)])
