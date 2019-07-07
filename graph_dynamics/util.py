@@ -281,7 +281,7 @@ def coordinate_tensors(*xi, periodic, next_fast_len=True, **kwargs):
     kernel_coordinate_tensor : np.ndarray
         coordinate tensor for the kernel (identical to `coordinate_tensor` if `periodic == True`)
     domain : np.ndarray
-        domain for the periodicity of the kernel
+        domain for the periodicity of the kernel with one entry for each dimension
     """
     dxi = []
     lengths = []

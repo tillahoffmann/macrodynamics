@@ -18,7 +18,8 @@ def _test_integration(operator, z0=None, time=1):
 
     # Make sure the values match
     z_analytic = operator.integrate_analytic(z0, time)
-    assert np.corrcoef(z_analytic.ravel(), z_numeric.ravel())[0, 1] > 0.99, "numeric and analytic integration differ"
+    corrcoef = np.corrcoef(z_analytic.ravel(), z_numeric.ravel())[0, 1]
+    assert corrcoef > 0.99, "numeric and analytic integration differ (correlation = %f)" % corrcoef
     return z0, z_numeric, z_analytic
 
 
