@@ -25,14 +25,16 @@ class ContinuousOperator(Operator):
 
     Parameters
     ----------
-    weight : np.ndarray or float
-        pointwise multiplicative weight `F(x)` for the state `z(x, t)`
+    weight : np.ndarray
+        pointwise multiplicative weight `F(x)` for the state `z(x, t)` with shape `(k, k, *n)`
     kernel : np.ndarray
-        homogeneous interaction kernel `H(x - y)`
-    kernel_weight_x : np.ndarray or float
-        pointwise multiplicative weight `G(x)` applied to the convolution
-    kernel_weight_y : np.ndarray or float
+        homogeneous interaction kernel `H(x - y)` with shape `(k, k, *n)`
+    kernel_weight_x : np.ndarray
+        pointwise multiplicative weight `G(x)` applied to the convolution with shape `(k, k, *n)`
+    kernel_weight_y : np.ndarray
         pointwise multiplicative weight `L(y)` applied to the argument of the convolution `z(y, t)`
+         with shape `(k, k, *n)` for periodic boundary conditions or `>= (k, k, *2 * (n - 1))` for
+         aperiodic boundary conditions
     dx : np.ndarray or float
         spacing between sample points
     control : np.ndarray
@@ -40,33 +42,45 @@ class ContinuousOperator(Operator):
     """
     def __init__(self, weight, kernel, kernel_weight_x, kernel_weight_y, dx, control=None):
         self.weight = np.asarray(weight)
-        # The weight must have at least three dimensions
-        assert self.weight.ndim > 2, "expected at least three dimensions for the multiplicative " \
-            "weight but got %d" % self.weight.shape
-        # The weight must have square leading dimensions
-        assert is_homogeneous(self.weight.shape[:2]), "leading dimensions must be square"
-
         self.kernel = np.asarray(kernel)
         self.kernel_weight_x = np.asarray(kernel_weight_x)
         self.kernel_weight_y = np.asarray(kernel_weight_y)
         # Broadcast the volume elements
         self.dx = dx * np.ones(self.ndim)
 
-        # Check that the shapes match up
-        attrs = ['kernel_weight_x', 'kernel_weight_y']
-        for attr in attrs:
-            x = getattr(self, attr)
-            assert x.shape == self.weight.shape, "expected `%s` to match the shape of the " \
-                "multiplicative weight %s but got %s" % (attr, self.shape, x.shape)
+        # Validate the shape of the multiplicative weight
+        assert self.weight.ndim > 2, "expected at least three-dimensional shape for `weight` but " \
+            "got `%s`" % (self.weight.shape,)
+        assert is_homogeneous(self.weight.shape[:2]), "leading two dimensions for `weight` must " \
+            "be square but got `%s`" % (self.weight.shape,)
 
-        # The leading dimensions of the kernel must match
-        np.testing.assert_equal(self.kernel.shape[:2], self.weight.shape[:2], "kernel must have "
-                                "same leading dimensions as the multiplicative weight")
+        # Validate the shape of the kernel weights
+        items = {
+            'kernel_weight_x': self.kernel_weight_x,
+            'kernel_weight_y': self.kernel_weight_y,
+        }
+        for key, value in items.items():
+            assert value.shape == self.weight.shape, "expected shape of `%s` to be the same as " \
+                "`weight.shape = %s` but got `%s`" % (key, self.weight.shape, value.shape)
 
-        # The shape will match for periodic boundary conditions but won't match for aperiodic boundary conditions
-        assert np.all(np.asarray(self.shape) <= self.kernel.shape[1:]), "expected kernel shape to be " \
-            "larger than or equal to the shape of the state %s but got %s" % \
-            (self.shape, self.kernel.shape)
+        # Validate the shape of the kernel
+        assert self.kernel.shape[:2] == self.weight.shape[:2], "expected the state shape of " \
+            "`kernel` to be the same as `weight.shape[:2] = %s` but got `%s`" % \
+            (self.weight.shape[:2], self.kernel.shape[:2])
+        spatial_weight_shape = np.asarray(self.weight.shape[2:])
+        spatial_kernel_shape = np.asarray(self.kernel.shape[2:])
+
+        if np.array_equal(spatial_kernel_shape, spatial_weight_shape):
+            self.periodic_boundary_conditions = True
+        elif np.all(spatial_kernel_shape >= 2 * (spatial_weight_shape - 1)):
+            self.periodic_boundary_conditions = False
+        else:
+            raise ValueError(
+                "expected the spatial shape of `kernel` to be the same as `weight.shape[2:] = %s` "
+                "(for periodic boundary conditions) or at least as large as "
+                "`2 * (weight.shape[2:] - 1 = %s)` for aperiodic boundary conditions but got `%s`" %
+                (spatial_weight_shape, 2 * spatial_weight_shape - 1, spatial_kernel_shape)
+            )
 
         # Store the control field
         self._control = None
@@ -108,7 +122,7 @@ class ContinuousOperator(Operator):
     @lazy_property
     def fft_kernel(self):
         """np.ndarray : Fourier transform of the kernel"""
-        return self._evaluate_fft(self.kernel, True) * self.dV
+        return self._evaluate_fft(self.kernel, True)
 
     def _evaluate_fft(self, x, forward):
         """
@@ -142,7 +156,7 @@ class ContinuousOperator(Operator):
 
     @lazy_property
     def has_analytic_solution(self):
-        return not self._inhomogeneous_attrs
+        return not self._inhomogeneous_attrs and self.kernel_weight_x.shape == self.kernel.shape
 
     def integrate_analytic(self, z, t):
         z = self._assert_valid_shape(z)
@@ -163,7 +177,7 @@ class ContinuousOperator(Operator):
 
         # Evaluate the operator and move the spatial part to the leading axes
         operator = weight + np.einsum('ij,jk...,kl->...il', kernel_weight_x, self.fft_kernel,
-                                      kernel_weight_y)
+                                      kernel_weight_y) * self.dV
         # Now we need to diagonalise each element of the big matrix
         evals, evecs = np.linalg.eig(operator)
         ievecs = np.linalg.inv(evecs)
@@ -209,7 +223,7 @@ class ContinuousOperator(Operator):
         ft_w = self._evaluate_fft(w, True)
         # Multiply by the kernel and invert
         ft_kernel_w = self._evaluate_dot(self.fft_kernel, ft_w)
-        grad = self._evaluate_fft(ft_kernel_w, False)
+        grad = self._evaluate_fft(ft_kernel_w, False) * self.dV
         # Extract the region near the origin (but only the spatial dims)
         grad = origin_array(grad, self.shape[1:], np.arange(1, grad.ndim))
         # Weight the gradient
