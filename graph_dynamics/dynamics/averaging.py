@@ -33,7 +33,7 @@ def evaluate_discrete_operator(adjacency):
     return DiscreteOperator.from_matrix(matrix)
 
 
-def evaluate_continuous_operator(connectivity, density, dx):
+def evaluate_continuous_operator(connectivity, density, dx, **kwargs):
     """
     Evaluate the differential operator for opinion averaging on a graph.
 
@@ -45,6 +45,8 @@ def evaluate_continuous_operator(connectivity, density, dx):
         density of nodes (use a scalar for uniform densities)
     dx : np.ndarray or float
         spacing of sample points
+    **kwargs : dict
+        additional keyword arguments passed to `ContinuousOperator.from_matrix`
 
     Returns
     -------
@@ -60,4 +62,5 @@ def evaluate_continuous_operator(connectivity, density, dx):
     # between the average and the current position
     weight = - np.ones_like(density)
 
-    return ContinuousOperator.from_matrix(weight, kernel, kernel_weight_x, kernel_weight_y, dx)
+    return ContinuousOperator.from_matrix(weight, kernel, kernel_weight_x, kernel_weight_y, dx,
+                                          **kwargs)

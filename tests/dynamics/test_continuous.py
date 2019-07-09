@@ -124,6 +124,19 @@ def test_continuous_diffusion_integration(continuous_diffusion_operator, density
     # TODO: compare with reference
 
 
+def test_continuous_diffusion_integration_with_control(continuous_diffusion_operator,
+                                                       density, initial_conditions):
+    continuous_diffusion_operator.control = np.pi * np.ones_like(density)[None]
+    _, z_numeric, _ = _test_integration(continuous_diffusion_operator, initial_conditions,
+                                        time=np.sqrt(2))
+    # Ensure the diffusion substance is conserved
+    np.testing.assert_allclose(
+        np.mean((initial_conditions + np.pi * np.sqrt(2)) * density),
+        np.mean(z_numeric * density),
+        err_msg="diffusion substance not conserved (subject to control)"
+    )
+
+
 def test_continuous_diffusion_integration_shape(continuous_diffusion_operator, integration_method, time):
     _test_integration_shape(continuous_diffusion_operator, integration_method, time)
 
@@ -133,3 +146,12 @@ def test_continous_oscillation_operator(continuous_oscillation_operator, density
     center = np.random.uniform(0, 1, num_dims)
     ic = gd.evaluate_gaussian_kernel(coordinate_tensor, center, 1, 0.05 ** 2)
     _test_integration(continuous_oscillation_operator, [ic, np.zeros_like(ic)])
+
+
+def test_continous_oscillation_operator_with_control(continuous_oscillation_operator, density,
+                                                     coordinate_tensor, num_dims, periodic, request):
+    center = np.random.uniform(0, 1, num_dims)
+    ic = gd.evaluate_gaussian_kernel(coordinate_tensor, center, 1, 0.05 ** 2)
+    ic = [ic, np.zeros_like(ic)]
+    continuous_oscillation_operator.control = np.ones_like(ic)
+    _test_integration(continuous_oscillation_operator, ic)

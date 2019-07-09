@@ -10,7 +10,7 @@ class ContinuousOperator(Operator):
 
     The operator evaluates the gradient
 
-    \frac{\partial z(x, t)}{\partial t} = F(x) z(x) + G(x) \int dy \, H(x - y) L(y) z(y, t),
+    \frac{\partial z(x, t)}{\partial t} = F(x) z(x) + G(x) \int dy \, H(x - y) L(y) z(y, t) + u(x),
 
     where all tensors `F` through `L` have shape `(k, k, *n)`, `k` is the number of states at each
     spatial point, and `n` is the shape of the space.
@@ -21,6 +21,7 @@ class ContinuousOperator(Operator):
       evolve independently.
     * `G(x)` weights the effect of the spatial convolution in real space.
     * `L(y)` weights the effect of the field prior to applying the convolution.
+    * `u(x)` is the static control field applied to the dynamics.
 
     Parameters
     ----------
@@ -36,8 +37,10 @@ class ContinuousOperator(Operator):
          aperiodic boundary conditions
     dx : np.ndarray or float
         spacing between sample points
+    control : np.ndarray
+        static control field to apply to the dynamics
     """
-    def __init__(self, weight, kernel, kernel_weight_x, kernel_weight_y, dx):
+    def __init__(self, weight, kernel, kernel_weight_x, kernel_weight_y, dx, control=None):
         self.weight = np.asarray(weight)
         self.kernel = np.asarray(kernel)
         self.kernel_weight_x = np.asarray(kernel_weight_x)
@@ -79,10 +82,24 @@ class ContinuousOperator(Operator):
                 (spatial_weight_shape, 2 * spatial_weight_shape - 1, spatial_kernel_shape)
             )
 
+        # Store the control field
+        self._control = None
+        self.control = control
+
     @classmethod
-    def from_matrix(cls, weight, kernel, kernel_weight_x, kernel_weight_y, dx):
+    def from_matrix(cls, weight, kernel, kernel_weight_x, kernel_weight_y, dx, **kwargs):
         args = [add_leading_dims(x, 2) for x in [weight, kernel, kernel_weight_x, kernel_weight_y]]
-        return cls(*args, dx)
+        return cls(*args, dx, **kwargs)
+
+    @lazy_property
+    def control(self):
+        return self._control
+
+    @control.setter
+    def control(self, control):
+        if control is not None:
+            control = self._assert_valid_shape(control)
+        self._control = control
 
     @lazy_property
     def shape(self):
@@ -165,12 +182,25 @@ class ContinuousOperator(Operator):
         evals, evecs = np.linalg.eig(operator)
         ievecs = np.linalg.inv(evecs)
 
-        # Take the fourier transform of the initial state
+        # Take the fourier transform of the initial state (state_dim, *fourier_dims)
         ft_z = self._evaluate_fft(z, True)
-        # Project into the diagonal space of the operator
+        # Project into the diagonal space of the operator (*fourier_dims, state_dim)
         ft_z = np.einsum('...ij,j...->...i', ievecs, ft_z)
         # Evolve the state (manual multiplication to support broadcast (which *= doesn't))
+        # (time_dim, *fourier_dims, state_dim)
         ft_z = np.exp(evals * np.reshape(t, (-1, *np.ones(ft_z.ndim, int)))) * ft_z
+        # Apply the control field
+        if self.control is not None:
+            # Move to the Fourier space (state_dim, *fourier_dims)
+            ft_control = self._evaluate_fft(self.control, True)
+            # Move to the eigenspace of the operator (*fourier_dims, state_dim)
+            ft_control = np.einsum('...ij,j...->...i', ievecs, ft_control)
+            # Evolve in the eigenspace (time_dim, *fourier_dims, state_dim)
+            # Note that we replace zero eigenvalues in the denominator with ones because the solution
+            # is NaN otherwise. Zero eigenvalues do not contribute anyway because expm1(0) = 0.
+            ft_control = np.expm1(evals * np.reshape(t, (-1, *np.ones(ft_control.ndim, int)))) * \
+                ft_control / np.where(evals == 0, 1.0, evals)
+            ft_z += ft_control
         # Project back into the original space
         ft_z = np.einsum('...ij,t...j->ti...', evecs, ft_z)
         # Compute the inverse transform
@@ -200,4 +230,7 @@ class ContinuousOperator(Operator):
         grad = self._evaluate_dot(self.kernel_weight_x, grad)
         # Add the elementwise multiplicative contribution
         grad += self._evaluate_dot(self.weight, z)
+        # Add the control field if present
+        if self.control is not None:
+            grad += self.control
         return grad

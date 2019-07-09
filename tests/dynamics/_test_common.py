@@ -7,6 +7,7 @@ def _test_integration(operator, z0=None, time=1):
         z0 = np.random.normal(0, 1, operator.shape)
     else:
         z0 = np.reshape(z0, operator.shape)
+
     # Run the integration
     z_numeric = operator.integrate_numeric(z0, time)
     z_naive = operator.integrate_naive(z0, np.linspace(0, time, 200) if np.isscalar(time) else time)[-1]

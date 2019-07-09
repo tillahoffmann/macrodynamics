@@ -30,7 +30,7 @@ def evaluate_discrete_operator(adjacency):
     return DiscreteOperator.from_matrix(adjacency - diag)
 
 
-def evaluate_continuous_operator(connectivity, density, dx):
+def evaluate_continuous_operator(connectivity, density, dx, **kwargs):
     """
     Evaluate the differential operator for diffusion on a graph.
 
@@ -47,6 +47,8 @@ def evaluate_continuous_operator(connectivity, density, dx):
     -------
     operator : ContinuousOperator
         differential operator for diffusion
+    **kwargs : dict
+        additional keyword arguments passed to `ContinuousOperator.from_matrix`
     """
     # The nodes lose walkers proportional to their degree
     weight = - evaluate_expected_degree(connectivity, density, dx)
@@ -56,4 +58,5 @@ def evaluate_continuous_operator(connectivity, density, dx):
     # The elementwise kernel weight is not relevant
     kernel_weight_x = np.ones_like(density)
 
-    return ContinuousOperator.from_matrix(weight, kernel, kernel_weight_x, kernel_weight_y, dx)
+    return ContinuousOperator.from_matrix(weight, kernel, kernel_weight_x, kernel_weight_y, dx,
+                                          **kwargs)

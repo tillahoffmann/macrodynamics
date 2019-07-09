@@ -67,8 +67,8 @@ class Operator:
         this operator.
         """
         z = np.asarray(z)
-        assert z.shape == self.shape, "expected state shape `%s` but got `%s`" % \
-            (self.shape, z.shape)
+        assert z.shape == self.shape, "expected state shape `%s` (state dim, *spatial dims) but " \
+            "got `%s`" % (self.shape, z.shape)
         return z
 
     def integrate_numeric(self, z, t, callback=None, **kwargs):
