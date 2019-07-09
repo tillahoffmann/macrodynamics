@@ -61,12 +61,6 @@ def continuous_diffusion_operator(connectivity, density, lin_dx):
 
 
 @pytest.fixture
-def continuous_diffusion_operator_with_control(connectivity, density, lin_dx):
-    control = np.pi * np.ones_like(density)[None]
-    return gd.diffusion.evaluate_continuous_operator(connectivity, density, lin_dx, control=control)
-
-
-@pytest.fixture
 def continuous_averaging_operator(connectivity, density, lin_dx):
     return gd.averaging.evaluate_continuous_operator(connectivity, density, lin_dx)
 
@@ -130,10 +124,11 @@ def test_continuous_diffusion_integration(continuous_diffusion_operator, density
     # TODO: compare with reference
 
 
-def test_continuous_diffusion_integration_with_control(continuous_diffusion_operator_with_control,
+def test_continuous_diffusion_integration_with_control(continuous_diffusion_operator,
                                                        density, initial_conditions):
-    _, z_numeric, _ = _test_integration(continuous_diffusion_operator_with_control,
-                                        initial_conditions, time=np.sqrt(2))
+    continuous_diffusion_operator.control = np.pi * np.ones_like(density)[None]
+    _, z_numeric, _ = _test_integration(continuous_diffusion_operator, initial_conditions,
+                                        time=np.sqrt(2))
     # Ensure the diffusion substance is conserved
     np.testing.assert_allclose(
         np.mean((initial_conditions + np.pi * np.sqrt(2)) * density),
@@ -151,3 +146,12 @@ def test_continous_oscillation_operator(continuous_oscillation_operator, density
     center = np.random.uniform(0, 1, num_dims)
     ic = gd.evaluate_gaussian_kernel(coordinate_tensor, center, 1, 0.05 ** 2)
     _test_integration(continuous_oscillation_operator, [ic, np.zeros_like(ic)])
+
+
+def test_continous_oscillation_operator_with_control(continuous_oscillation_operator, density,
+                                                     coordinate_tensor, num_dims, periodic, request):
+    center = np.random.uniform(0, 1, num_dims)
+    ic = gd.evaluate_gaussian_kernel(coordinate_tensor, center, 1, 0.05 ** 2)
+    ic = [ic, np.zeros_like(ic)]
+    continuous_oscillation_operator.control = np.ones_like(ic)
+    _test_integration(continuous_oscillation_operator, ic)

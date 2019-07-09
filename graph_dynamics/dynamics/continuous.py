@@ -192,7 +192,7 @@ class ContinuousOperator(Operator):
         # Apply the control field
         if self.control is not None:
             # Move to the Fourier space (state_dim, *fourier_dims)
-            ft_control = self._evaluate_fft(self.control, True) * self.dV
+            ft_control = self._evaluate_fft(self.control, True)
             # Move to the eigenspace of the operator (*fourier_dims, state_dim)
             ft_control = np.einsum('...ij,j...->...i', ievecs, ft_control)
             # Evolve in the eigenspace (time_dim, *fourier_dims, state_dim)
