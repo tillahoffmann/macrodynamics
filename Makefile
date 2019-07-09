@@ -10,6 +10,8 @@ install :
 clean :
 	rm -rf build
 	rm -f **/*.so
+	rm -f requirements.txt
+	rm -f test-requirements.txt
 
 tests :
 	py.test tests --lf --cov=graph_dynamics --cov-report=html --cov-report=term-missing
