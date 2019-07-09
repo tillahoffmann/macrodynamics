@@ -1,7 +1,7 @@
 .PHONY : tests clean install
 
 requirements.txt test-requirements.txt : %.txt : %.in setup.py
-	pip-compile -v $< --output-file $*.tmp
+	pip-compile --upgrade -v $< --output-file $*.tmp
 	./make_paths_relative.py < $*.tmp > $@
 
 install :
