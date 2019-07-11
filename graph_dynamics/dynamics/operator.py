@@ -71,7 +71,7 @@ class Operator:
             "got `%s`" % (self.shape, z.shape)
         return z
 
-    def integrate_numeric(self, z, t, callback=None, **kwargs):
+    def integrate_numeric(self, z, t, callback=None, method='LSODA', **kwargs):
         """
         Solve for `z` as a function of `t` numerically.
 
@@ -84,7 +84,7 @@ class Operator:
         callback : callable or None
             function for each evaluation of the RHS
         kwargs : dict
-            keyword arguments passed to `scipy.integrate.ode.set_integrator`
+            keyword arguments passed to `scipy.integrate.ode.solve_ivp`
 
         Returns
         -------
@@ -101,6 +101,7 @@ class Operator:
             (times[0], times[-1]),
             z.ravel(),
             t_eval=times,
+            method=method,
             **kwargs
         )
         # Reshape the flattened array to the desired shape
