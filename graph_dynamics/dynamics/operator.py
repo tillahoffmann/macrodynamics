@@ -132,7 +132,8 @@ class Operator:
         self._assert_valid_shape(z)
         zs = [z]
 
-        assert np.ndim(t) == 1, "time vector must be one-dimensional for naive integration"
+        if np.ndim(t) != 1:
+            raise ValueError("time vector must be one-dimensional for naive integration")
 
         time = t[0]
         for next_time in t[1:]:
