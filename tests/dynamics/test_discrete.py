@@ -86,8 +86,9 @@ def test_discrete_diffusion_integration(discrete_diffusion_operator):
     for _ in range(num_steps):
         z_desired += discrete_diffusion_operator.matrix.dot(z_desired) * dt
     # Ensure conservation
-    np.testing.assert_allclose(np.sum(z_desired), np.sum(z0), 1e-5, err_msg="number of walkers not conserved")
-    assert np.corrcoef(z_actual.ravel(), z_desired)[0, 1] > 0.99, "naive and `scipy.integrate.odeint` differ"
+    np.testing.assert_allclose(np.sum(z_desired), np.sum(z0), 1e-5,
+                               err_msg="number of walkers not conserved")
+    gd.assert_correlated(z_actual, z_desired[None])
 
 
 def test_discrete_diffusion_integration_shape(discrete_diffusion_operator, integration_method, time):

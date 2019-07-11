@@ -1,8 +1,14 @@
 import numpy as np
 import pytest
 
+import graph_dynamics as gd
 
-def _test_integration(operator, z0=None, time=1):
+
+def _test_integration(operator, z0=None, time=1, num=200):
+    """
+    Test that naive, numeric, and analytic integration are consistent. The comparison with analytic
+    integration is omitted if the operator does not have a (known) analytic solution.
+    """
     if z0 is None:
         z0 = np.random.normal(0, 1, operator.shape)
     else:
@@ -10,28 +16,29 @@ def _test_integration(operator, z0=None, time=1):
 
     # Run the integration
     z_numeric = operator.integrate_numeric(z0, time)
-    z_naive = operator.integrate_naive(z0, np.linspace(0, time, 200) if np.isscalar(time) else time)[-1]
-    corrcoef = np.corrcoef(z_naive.ravel(), z_numeric.ravel())[0, 1]
-    assert corrcoef > 0.99, "numeric and naive integration differ (correlation = %f)" % corrcoef
+    z_naive = operator.integrate_naive(z0, np.linspace(0, time, num) if np.isscalar(time) else time)[-1]
+    gd.assert_correlated(z_naive, z_numeric)
 
     if not operator.has_analytic_solution:
         return z0, z_numeric, None
 
     # Make sure the values match
     z_analytic = operator.integrate_analytic(z0, time)
-    corrcoef = np.corrcoef(z_analytic.ravel(), z_numeric.ravel())[0, 1]
-    assert corrcoef > 0.99, "numeric and analytic integration differ (correlation = %f)" % corrcoef
+    gd.assert_correlated(z_numeric, z_analytic)
     return z0, z_numeric, z_analytic
 
 
 def _test_integration_shape(operator, integration_method, time):
+    """
+    Test that the output of an integration has the desired shape or raises a `ValueError` if the
+    integration cannot be performed..
+    """
     z0 = np.random.normal(0, 1, operator.shape)
-    if not operator.has_analytic_solution and integration_method == 'analytic':
+    if (not operator.has_analytic_solution and integration_method == 'analytic') or \
+        (np.isscalar(time) and integration_method == 'naive'):
         with pytest.raises(ValueError):
             operator.integrate(z0, time, integration_method)
     else:
-        if np.isscalar(time) and integration_method == 'naive':
-            pytest.skip("naive integration requires a vector of time points")
         z = operator.integrate(z0, time, integration_method)
         if np.isscalar(time):
             assert z.shape == z0.shape, "output shape does not match input shape"

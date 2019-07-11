@@ -409,3 +409,29 @@ def ignore_scipy_issue_9093(function):
             warnings.filterwarnings("ignore", "the matrix subclass is not the recommended way")
             return function(*args, **kwargs)
     return _wrapper
+
+
+def assert_correlated(actual, desired, tol=1e-3):
+    """
+    Raises an AssertionError if two objects are not sufficiently linearly correlated.
+
+    Parameters
+    ----------
+    actual : array_like
+        Array obtained.
+    desired : array_like
+        Array desired.
+    tol : float
+        Tolerance for the correlation coefficient.
+
+    Raises
+    ------
+    AssertionError
+        If actual and desired are not sufficiently linearly correlated.
+    """
+    assert actual.shape == desired.shape, "`actual` has shape %s but `desired` has shape %s" % \
+        (actual.shape, desired.shape)
+    corrcoef = np.corrcoef(actual.ravel(), desired.ravel())[0, 1]
+    delta = 1 - corrcoef
+    assert delta < tol, "correlation coefficient %f differs from 1 by %f, exceeding tolerance %f" % \
+        (corrcoef, delta, tol)
