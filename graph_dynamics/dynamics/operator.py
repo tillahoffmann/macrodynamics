@@ -108,7 +108,7 @@ class Operator:
         z = result.y.T.reshape((-1, * self.shape))
         return z[-1] if np.isscalar(t) else z
 
-    def integrate_naive(self, z, t, tqdm=None):
+    def integrate_naive(self, z, t):
         """
         Solve for `z` as a function of `t` using naive finite difference integration.
 
@@ -118,8 +118,6 @@ class Operator:
             initial state
         t : np.ndarray
             time at which to solve for `z`
-        tqdm :
-            progress bar instance
 
         Returns
         -------
@@ -136,13 +134,13 @@ class Operator:
 
         assert np.ndim(t) == 1, "time vector must be one-dimensional for naive integration"
 
-        previous_time = t[0]
-        for time in tqdm(t[1:]) if tqdm else t[1:]:
+        time = t[0]
+        for next_time in t[1:]:
             grad = self.evaluate_gradient(z, time)
-            self._assert_valid_shape(grad)
-            z = z + (time - previous_time) * grad
+            dt = next_time - time
+            z = z + dt * grad
             zs.append(z.copy())
-            previous_time = time
+            time = next_time
 
         return np.asarray(zs)
 
