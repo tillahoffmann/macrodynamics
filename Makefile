@@ -7,11 +7,12 @@ requirements.txt test-requirements.txt : %.txt : %.in setup.py
 install :
 	pip install -r requirements.txt
 
-clean :
+clean : clean/tests
 	rm -rf build
 	rm -f **/*.so
-	rm -f requirements.txt
-	rm -f test-requirements.txt
+
+clean/tests :
+	rm -rf .pytest_cache
 
 tests :
 	py.test tests --lf --cov=graph_dynamics --cov-report=html --cov-report=term-missing
