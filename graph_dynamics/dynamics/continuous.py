@@ -82,24 +82,12 @@ class ContinuousOperator(Operator):
                 (spatial_weight_shape, 2 * spatial_weight_shape - 1, spatial_kernel_shape)
             )
 
-        # Store the control field
-        self._control = None
-        self.control = control
+        super(ContinuousOperator, self).__init__(control)
 
     @classmethod
     def from_matrix(cls, weight, kernel, kernel_weight_x, kernel_weight_y, dx, **kwargs):
         args = [add_leading_dims(x, 2) for x in [weight, kernel, kernel_weight_x, kernel_weight_y]]
         return cls(*args, dx, **kwargs)
-
-    @lazy_property
-    def control(self):
-        return self._control
-
-    @control.setter
-    def control(self, control):
-        if control is not None:
-            control = self._assert_valid_shape(control)
-        self._control = control
 
     @lazy_property
     def shape(self):
