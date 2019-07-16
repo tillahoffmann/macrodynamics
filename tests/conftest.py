@@ -26,7 +26,7 @@ kernel = gd.list_fixture([
     'laplace_kernel',
 ])
 
-num_dims = gd.list_fixture([2, 1])
+num_dims = gd.list_fixture([2, 1], ['2d', '1d'])
 
 integration_method = gd.list_fixture(['analytic', 'numeric', 'naive'])
 
