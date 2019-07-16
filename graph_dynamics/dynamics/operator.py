@@ -8,7 +8,26 @@ from ..util import lazy_property
 class Operator:
     """
     Base class for differential operators.
+
+    Parameters
+    ----------
+    control : np.ndarray
+        static control to apply to the dynamics
     """
+    def __init__(self, control=None):
+        self._control = None
+        self.control = control
+
+    @property
+    def control(self):
+        return self._control
+
+    @control.setter
+    def control(self, control):
+        if control is not None:
+            control = self._assert_valid_shape(control)
+        self._control = control
+
     @lazy_property
     def shape(self):
         """tuple : shape of the state array"""

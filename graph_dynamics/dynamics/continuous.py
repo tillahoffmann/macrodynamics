@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import special
 
 from ..util import lazy_property, origin_array, is_homogeneous, first_element, add_leading_dims
 from .operator import Operator
@@ -82,24 +83,12 @@ class ContinuousOperator(Operator):
                 (spatial_weight_shape, 2 * spatial_weight_shape - 1, spatial_kernel_shape)
             )
 
-        # Store the control field
-        self._control = None
-        self.control = control
+        super(ContinuousOperator, self).__init__(control)
 
     @classmethod
     def from_matrix(cls, weight, kernel, kernel_weight_x, kernel_weight_y, dx, **kwargs):
         args = [add_leading_dims(x, 2) for x in [weight, kernel, kernel_weight_x, kernel_weight_y]]
         return cls(*args, dx, **kwargs)
-
-    @lazy_property
-    def control(self):
-        return self._control
-
-    @control.setter
-    def control(self, control):
-        if control is not None:
-            control = self._assert_valid_shape(control)
-        self._control = control
 
     @lazy_property
     def shape(self):
@@ -188,7 +177,8 @@ class ContinuousOperator(Operator):
         ft_z = np.einsum('...ij,j...->...i', ievecs, ft_z)
         # Evolve the state (manual multiplication to support broadcast (which *= doesn't))
         # (time_dim, *fourier_dims, state_dim)
-        ft_z = np.exp(evals * np.reshape(t, (-1, *np.ones(ft_z.ndim, int)))) * ft_z
+        t_vector = np.reshape(t, (-1, *np.ones(ft_z.ndim, int)))
+        ft_z = np.exp(evals * t_vector) * ft_z
         # Apply the control field
         if self.control is not None:
             # Move to the Fourier space (state_dim, *fourier_dims)
@@ -196,11 +186,11 @@ class ContinuousOperator(Operator):
             # Move to the eigenspace of the operator (*fourier_dims, state_dim)
             ft_control = np.einsum('...ij,j...->...i', ievecs, ft_control)
             # Evolve in the eigenspace (time_dim, *fourier_dims, state_dim)
-            # Note that we replace zero eigenvalues in the denominator with ones because the solution
-            # is NaN otherwise. Zero eigenvalues do not contribute anyway because expm1(0) = 0.
-            ft_control = np.expm1(evals * np.reshape(t, (-1, *np.ones(ft_control.ndim, int)))) * \
-                ft_control / np.where(evals == 0, 1.0, evals)
-            ft_z += ft_control
+            zeros = evals == 0
+            ft_z += ft_control * np.where(
+                zeros, t_vector,
+                special.expm1(evals * t_vector) / np.where(zeros, 1, evals)
+            )
         # Project back into the original space
         ft_z = np.einsum('...ij,t...j->ti...', evecs, ft_z)
         # Compute the inverse transform

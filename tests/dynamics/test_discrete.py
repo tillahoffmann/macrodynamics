@@ -10,7 +10,7 @@ from _test_common import _test_integration, _test_integration_shape
 num_nodes = 100
 eps = np.finfo(np.float32).eps
 
-is_sparse = gd.list_fixture([False, True])
+is_sparse = gd.list_fixture([False, True], ['dense', 'sparse'])
 
 STATE = {}
 
@@ -89,6 +89,11 @@ def test_discrete_diffusion_integration(discrete_diffusion_operator):
     np.testing.assert_allclose(np.sum(z_desired), np.sum(z0), 1e-5,
                                err_msg="number of walkers not conserved")
     gd.assert_correlated(z_actual, z_desired[None])
+
+
+def test_discrete_diffusion_integration_with_control(discrete_diffusion_operator):
+    discrete_diffusion_operator.control = np.random.normal(0, 1, discrete_diffusion_operator.shape)
+    _test_integration(discrete_diffusion_operator, time=2)
 
 
 def test_discrete_diffusion_integration_shape(discrete_diffusion_operator, integration_method, time):
