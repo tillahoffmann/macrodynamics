@@ -1,5 +1,5 @@
 import numpy as np
-from scipy import sparse
+from scipy import sparse, special
 
 from ..util import lazy_property, to_array, is_homogeneous, add_leading_dims
 from .operator import Operator
@@ -16,6 +16,8 @@ class DiscreteOperator(Operator):
         the number of nodes and `k` is the number of state variables
     shape : np.ndarray
         shape `(k, n)` of the state vector
+    control : np.ndarray
+        static control vector to apply to the dynamics
 
     Notes
     -----
@@ -23,13 +25,14 @@ class DiscreteOperator(Operator):
     particularly efficient for the dot product used in the calculation of the gradient. See
     https://docs.scipy.org/doc/scipy/reference/sparse.html#usage-information for details.
     """
-    def __init__(self, matrix, shape):
+    def __init__(self, matrix, shape, control=None):
         self.matrix = matrix
         self._shape = shape
         assert len(self.shape) == 2, "shape must have length two but got %d" % len(self.shape)
         matrix_rank = np.prod(self.shape)
         assert self.matrix.shape == (matrix_rank, matrix_rank), \
             "expected matrix shape %s but got %s" % ((matrix_rank, matrix_rank), self.matrix.shape)
+        super(DiscreteOperator, self).__init__(control)
 
     @classmethod
     def from_tensor(cls, tensor):
@@ -116,7 +119,17 @@ class DiscreteOperator(Operator):
         # Project into the diagonal basis
         z = np.dot(self.ievecs, z.ravel())
         # Evolve the state (which has shape (number of time steps, number of state variables))
-        z = np.exp(self.evals * np.reshape(t, (-1, 1))) * z
+        t_vector = np.reshape(t, (-1, 1))
+        z = np.exp(self.evals * t_vector) * z
+        if self.control is not None:
+            # Project into the diagonal basis
+            control = np.dot(self.ievecs, self.control.ravel())
+            # Evolve the state
+            zeros = self.evals == 0
+            z += control * np.where(
+                zeros, t_vector,
+                special.expm1(self.evals * t_vector) / np.where(zeros, 1, self.evals)
+            )
         # Project back into the real space
         z = np.einsum('ij,tj->ti', self.evecs, z)
         z = np.reshape(z, (-1, *self.shape))
@@ -125,7 +138,10 @@ class DiscreteOperator(Operator):
     def evaluate_gradient(self, z, t=None):
         z = self._assert_valid_shape(z)
         grad = self.matrix.dot(z.ravel())
-        return np.reshape(grad, self.shape)
+        grad = np.reshape(grad, self.shape)
+        if self.control is not None:
+            grad += self.control
+        return grad
 
     @property
     def has_analytic_solution(self):
