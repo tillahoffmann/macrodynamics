@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from matplotlib import collections as mcollections
 import numpy as np
 from scipy.fftpack.helper import next_fast_len
-from scipy import sparse
+from scipy import sparse, special
 from ._util import smoothed_sum
 
 
@@ -196,13 +196,14 @@ def origin_array(arr, newshape, axes=None):
         axes = np.arange(arr.ndim)
     else:
         axes = np.asarray(axes)
-    assert len(axes) == len(newshape), "`newshape` has length %d but there are %d axes" % (len(newshape), len(axes))
+    assert len(axes) == len(newshape), "`newshape` has length %d but there are %d axes" % \
+        (len(newshape), len(axes))
     # Determine the shape
     shape = np.asarray(arr.shape)
     shape[axes] = newshape
     # Make sure the slice is sensible
-    assert np.all(shape <= arr.shape), "expected the output shape to be smaller than or equal to the input shape %s " \
-        "but got %s" % (arr.shape, shape)
+    assert np.all(shape <= arr.shape), "expected the output shape to be smaller than or equal to " \
+        "the input shape %s but got %s" % (arr.shape, shape)
     # Create the slices
     myslice = [slice(0, s) for s in shape]
     return arr[tuple(myslice)]
@@ -411,6 +412,14 @@ def ignore_scipy_issue_9093(function):
     return _wrapper
 
 
+def nexpm1(a, x):
+    """
+    Evaluates `(exp(a * x) - 1) / a` safely.
+    """
+    fltr = a == 0
+    return np.where(fltr, x, special.expm1(a * x) / np.where(fltr, 1, a))
+
+
 def assert_correlated(actual, desired, tol=1e-3):
     """
     Raises an AssertionError if two objects are not sufficiently linearly correlated.
@@ -429,6 +438,8 @@ def assert_correlated(actual, desired, tol=1e-3):
     AssertionError
         If actual and desired are not sufficiently linearly correlated.
     """
+    actual = np.asarray(actual)
+    desired = np.asarray(desired)
     assert actual.shape == desired.shape, "`actual` has shape %s but `desired` has shape %s" % \
         (actual.shape, desired.shape)
     corrcoef = np.corrcoef(actual.ravel(), desired.ravel())[0, 1]

@@ -1,7 +1,7 @@
 import numpy as np
-from scipy import sparse, special
+from scipy import sparse
 
-from ..util import lazy_property, to_array, is_homogeneous, add_leading_dims
+from ..util import lazy_property, to_array, is_homogeneous, add_leading_dims, nexpm1
 from .operator import Operator
 
 
@@ -125,11 +125,7 @@ class DiscreteOperator(Operator):
             # Project into the diagonal basis
             control = np.dot(self.ievecs, self.control.ravel())
             # Evolve the state
-            zeros = self.evals == 0
-            z += control * np.where(
-                zeros, t_vector,
-                special.expm1(self.evals * t_vector) / np.where(zeros, 1, self.evals)
-            )
+            z += control * nexpm1(self.evals, t_vector)
         # Project back into the real space
         z = np.einsum('ij,tj->ti', self.evecs, z)
         z = np.reshape(z, (-1, *self.shape))
