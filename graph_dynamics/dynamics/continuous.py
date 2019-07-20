@@ -1,7 +1,7 @@
 import numpy as np
-from scipy import special
 
-from ..util import lazy_property, origin_array, is_homogeneous, first_element, add_leading_dims
+from ..util import lazy_property, origin_array, is_homogeneous, first_element, add_leading_dims, \
+    nexpm1
 from .operator import Operator
 
 
@@ -93,8 +93,8 @@ class ContinuousOperator(Operator):
     @lazy_property
     def shape(self):
         # We have to use the multiplicative weight because the kernel may be larger than the state
-        # for non-periodic boundary conditions. Drop the first dimension because it does not represent
-        # the shape of the state.
+        # for non-periodic boundary conditions. Drop the first dimension because it does not
+        # represent the shape of the state.
         return self.weight.shape[1:]
 
     @lazy_property
@@ -147,11 +147,15 @@ class ContinuousOperator(Operator):
     def has_analytic_solution(self):
         return not self._inhomogeneous_attrs and self.kernel_weight_x.shape == self.kernel.shape
 
-    def integrate_analytic(self, z, t):
-        z = self._assert_valid_shape(z)
+    @lazy_property
+    def _fft_operator(self):
+        """
+        np.ndarray : Operator responsible for the evolution of the fourier-transformed fields.
+        """
         # Check all the weight functions are homogeneous
         if not self.has_analytic_solution:
-            raise ValueError("analytic solution is not available for inhomogeneous %s" % self._inhomogeneous_attrs)
+            raise ValueError("analytic solution is not available for inhomogeneous %s" %
+                             self._inhomogeneous_attrs)
 
         # Get the first dimensions
         args = [self.weight, self.kernel_weight_x, self.kernel_weight_y]
@@ -165,12 +169,19 @@ class ContinuousOperator(Operator):
         weight, kernel_weight_x, kernel_weight_y = args
 
         # Evaluate the operator and move the spatial part to the leading axes
-        operator = weight + np.einsum('ij,jk...,kl->...il', kernel_weight_x, self.fft_kernel,
+        return weight + np.einsum('ij,jk...,kl->...il', kernel_weight_x, self.fft_kernel,
                                       kernel_weight_y) * self.dV
-        # Now we need to diagonalise each element of the big matrix
-        evals, evecs = np.linalg.eig(operator)
-        ievecs = np.linalg.inv(evecs)
 
+    @lazy_property
+    def _fft_eig(self):
+        # Now we need to diagonalise each element of the big matrix
+        evals, evecs = np.linalg.eig(self._fft_operator)
+        ievecs = np.linalg.inv(evecs)
+        return evals, evecs, ievecs
+
+    def integrate_analytic(self, z, t):
+        z = self._assert_valid_shape(z)
+        evals, evecs, ievecs = self._fft_eig
         # Take the fourier transform of the initial state (state_dim, *fourier_dims)
         ft_z = self._evaluate_fft(z, True)
         # Project into the diagonal space of the operator (*fourier_dims, state_dim)
@@ -186,11 +197,7 @@ class ContinuousOperator(Operator):
             # Move to the eigenspace of the operator (*fourier_dims, state_dim)
             ft_control = np.einsum('...ij,j...->...i', ievecs, ft_control)
             # Evolve in the eigenspace (time_dim, *fourier_dims, state_dim)
-            zeros = evals == 0
-            ft_z += ft_control * np.where(
-                zeros, t_vector,
-                special.expm1(evals * t_vector) / np.where(zeros, 1, evals)
-            )
+            ft_z += ft_control * nexpm1(evals, t_vector)
         # Project back into the original space
         ft_z = np.einsum('...ij,t...j->ti...', evecs, ft_z)
         # Compute the inverse transform
@@ -224,3 +231,74 @@ class ContinuousOperator(Operator):
         if self.control is not None:
             grad += self.control
         return grad
+
+    def evaluate_control(self, z, setpoint, residual_weight, control_weight, t):
+        r"""
+        Evaluate the optimal control field that minimises the loss function
+
+        \int dx \, (z(x, t) - r(x))^T \alpha (z(x, t) - r(x)) + t \int dx \, u^T(x) \beta u(x),
+
+        where `r(x)` is the setpoint, `t` is the time horizon, `\alpha` is the weight placed on
+        achieving the setpoint, and `\beta` is the cost of applying the control.
+
+        Parameters
+        ----------
+        z : np.ndarray
+            Initial state with shape `(k, *n)`.
+        setpoint : np.ndarray
+            Desired setpoint with shape `(k, *n)`.
+        residual_weight : np.ndarray
+            Weight associated with the cost due to departures from the setpoint with shape `(k, k)`.
+        control_weight : np.ndarray
+            Weight associated with the cost due to applying the control with shape `(k, k)`.
+        t : float
+            Time horizon for achieving the setpoint.
+
+        Returns
+        -------
+        control : np.ndarray
+            Optimal control field that minimises the loss function.
+        """
+        # Validate the inputs
+        z = self._assert_valid_shape(z)
+        k, *_ = z.shape
+        setpoint = self._assert_valid_shape(setpoint)
+        control_weight = np.atleast_2d(control_weight)
+        assert control_weight.shape == (k, k)
+        residual_weight = np.atleast_2d(residual_weight)
+        assert residual_weight.shape == (k, k)
+
+        # Evaluate the eigensystem
+        # evals (*fourier_dims, state_dim)
+        # evecs, ievecs (*fourier_dims, k, k)
+        evals, evecs, ievecs = self._fft_eig
+        # Take the fourier transform of the initial state (state_dim, *fourier_dims)
+        ft_z = self._evaluate_fft(z, True)
+        ft_setpoint = self._evaluate_fft(setpoint, True)
+        # Project into the diagonal space of the operator (*fourier_dims, state_dim)
+        ft_z = np.einsum('...ij,j...->...i', ievecs, ft_z)
+        ft_setpoint = np.einsum('...ij,j...->...i', ievecs, ft_setpoint)
+        # Evolve the state as if it evolved without any control applied (*fourier_dims, state_dim)
+        ft_z *= np.exp(evals * t)
+        # Compute the residual between the setpoint and the evolution (*fourier_dims, state_dim)
+        ft_residual = ft_setpoint - ft_z
+        # Symmetrise the weight matrices (k, k)
+        residual_weight += np.transpose(residual_weight)
+        control_weight += np.transpose(control_weight)
+        # Transform into the eigenbasis for each distinct wavenumber (*fourier_dims, k, k)
+        residual_weight = np.einsum('...ji,jk,...kl', evecs, residual_weight, evecs)
+        control_weight = np.einsum('...ji,jk,...kl', evecs, control_weight, evecs)
+        # Evaluate the diagonal "normalised" expm1 matrix (*fourier_dims, k, k)
+        diag = np.eye(k)[None] * nexpm1(evals, t)[..., None]
+        idiag = np.eye(k)[None] / nexpm1(evals, t)[..., None]
+        # Evaluate the denominator (*fourier_dims, k, k)
+        denominator = diag + t * np.einsum('...ij,...jk,...kl', np.linalg.inv(residual_weight),
+                                        idiag, control_weight)
+        # Evaluate the control field in eigenbasis (*fourier_dims, k)
+        ft_control = np.einsum('...ij,...j', np.linalg.inv(denominator), ft_residual)
+        # Project back into the original fourier space (k, *fourier_dims)
+        ft_control = np.einsum('...ij,...j->i...', evecs, ft_control)
+        # Compute the inverse Fourier transform (k, *spatial_dims)
+        control = self._evaluate_fft(ft_control, False)
+        # Extract the region near the origin
+        return origin_array(control, self.shape[1:], axes=1 + np.arange(self.ndim))
