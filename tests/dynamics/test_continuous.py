@@ -149,9 +149,38 @@ def test_continous_oscillation_operator(continuous_oscillation_operator, density
 
 
 def test_continous_oscillation_operator_with_control(continuous_oscillation_operator, density,
-                                                     coordinate_tensor, num_dims, periodic, request):
+                                                     coordinate_tensor, num_dims, periodic):
     center = np.random.uniform(0, 1, num_dims)
     ic = gd.evaluate_gaussian_kernel(coordinate_tensor, center, 1, 0.05 ** 2)
     ic = [ic, np.zeros_like(ic)]
     continuous_oscillation_operator.control = np.ones_like(ic)
     _test_integration(continuous_oscillation_operator, ic)
+
+
+@pytest.mark.parametrize('control_weight', [0, 0.1])
+def test_continuous_oscillation_optimal_control(continuous_oscillation_operator, density,
+                                                coordinate_tensor, num_dims, periodic, control_weight):
+    if not continuous_oscillation_operator.has_analytic_solution:
+        pytest.skip()
+    # Define the inputs
+    t = np.sqrt(2)
+    ic = gd.evaluate_gaussian_kernel(coordinate_tensor, .25, 1, 0.05 ** 2)
+    ic = [ic, np.zeros_like(ic)]
+    setpoint = gd.evaluate_gaussian_kernel(coordinate_tensor, .75, 1, 0.05 ** 2)
+    setpoint = [setpoint, np.zeros_like(setpoint)]
+
+    z_nc = continuous_oscillation_operator.integrate_analytic(ic, t)
+    # Evaluate the control field
+    control = continuous_oscillation_operator.evaluate_control(ic, setpoint, np.eye(2),
+                                                               control_weight * np.eye(2), t)
+    continuous_oscillation_operator.control = control
+    z_wc = continuous_oscillation_operator.integrate_analytic(ic, t)
+
+    # Check that the result with control is better than the one without
+    corrcoef_nc = np.corrcoef(np.ravel(setpoint), z_nc.ravel())[0, 1]
+    corrcoef_wc = np.corrcoef(np.ravel(setpoint), z_wc.ravel())[0, 1]
+    assert corrcoef_wc > corrcoef_nc
+
+    # Assert that we get the "right" result if the control weight is zero
+    if control_weight == 0:
+        gd.assert_correlated(setpoint, z_wc)
