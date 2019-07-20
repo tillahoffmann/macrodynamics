@@ -85,7 +85,7 @@ class Operator:
         Helper function to assert that `z` has the same shape as the state vector associated with
         this operator.
         """
-        z = np.asarray(z)
+        z = np.atleast_2d(z)
         assert z.shape == self.shape, "expected state shape `%s` (state dim, *spatial dims) but " \
             "got `%s`" % (self.shape, z.shape)
         return z
