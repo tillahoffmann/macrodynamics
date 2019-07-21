@@ -70,6 +70,17 @@ def continuous_oscillation_operator(connectivity, density, lin_dx):
     return gd.oscillation.evaluate_continuous_operator(connectivity, density, lin_dx)
 
 
+def test_operator_shape_validation():
+    with pytest.raises(ValueError):
+        gd.ContinuousOperator(
+            weight=np.empty((1, 1, 10)),
+            kernel_weight_x=np.empty((1, 1, 10)),
+            kernel_weight_y=np.empty((1, 1, 10)),
+            kernel=np.empty((1, 1, 5)),
+            dx=1.0
+        )
+
+
 def test_density(density, lin_dx):
     np.testing.assert_array_less(0, density, "density is negative")
     np.testing.assert_allclose(np.sum(density) * lin_dx ** np.ndim(density), num_nodes,
