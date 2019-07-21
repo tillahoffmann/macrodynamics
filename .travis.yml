@@ -7,4 +7,4 @@ cache: pip
 install:
   - pip install -r test-requirements.txt
 script:
-  - make tests
+  - make tests docs
