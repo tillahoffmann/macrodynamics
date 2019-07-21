@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from scipy import sparse
-import graph_dynamics as gd
+import macrodynamics as md
 
 from _test_common import _test_integration, _test_integration_shape
 
@@ -10,7 +10,7 @@ from _test_common import _test_integration, _test_integration_shape
 num_nodes = 100
 eps = np.finfo(np.float32).eps
 
-is_sparse = gd.list_fixture([False, True], ['dense', 'sparse'])
+is_sparse = md.list_fixture([False, True], ['dense', 'sparse'])
 
 STATE = {}
 
@@ -39,7 +39,7 @@ def get_state(request, fixtures, key, default):
 def adjacency(num_dims, kernel, is_sparse):
     # Sample coordinates
     coordinates = np.random.uniform(0, 1, (num_nodes, num_dims))
-    adjacency = gd.sample_adjacency(coordinates, kernel)
+    adjacency = md.sample_adjacency(coordinates, kernel)
     if is_sparse:
         adjacency = sparse.csr_matrix(adjacency)
     return adjacency
@@ -47,21 +47,21 @@ def adjacency(num_dims, kernel, is_sparse):
 
 @pytest.fixture
 def discrete_diffusion_operator(adjacency):
-    return gd.diffusion.evaluate_discrete_operator(adjacency)
+    return md.diffusion.evaluate_discrete_operator(adjacency)
 
 
 @pytest.fixture
 def discrete_averaging_operator(adjacency):
-    return gd.averaging.evaluate_discrete_operator(adjacency)
+    return md.averaging.evaluate_discrete_operator(adjacency)
 
 
 @pytest.fixture
 def discrete_oscillation_operator(adjacency):
-    return gd.oscillation.evaluate_discrete_operator(adjacency)
+    return md.oscillation.evaluate_discrete_operator(adjacency)
 
 
 def test_discrete_diffusion_operator(discrete_diffusion_operator, request):
-    matrix = gd.to_array(discrete_diffusion_operator.matrix)
+    matrix = md.to_array(discrete_diffusion_operator.matrix)
     # Evaluate the diffusion Laplacian and test its fundamental properties
     np.testing.assert_array_less(np.diag(matrix), eps, "diagonal entries must be non-positive")
     np.testing.assert_array_less(-eps, np.triu(matrix, 1), "upper diagonal must be non-negative")
@@ -88,7 +88,7 @@ def test_discrete_diffusion_integration(discrete_diffusion_operator):
     # Ensure conservation
     np.testing.assert_allclose(np.sum(z_desired), np.sum(z0), 1e-5,
                                err_msg="number of walkers not conserved")
-    gd.assert_correlated(z_actual, z_desired[None])
+    md.assert_correlated(z_actual, z_desired[None])
 
 
 def test_discrete_diffusion_integration_with_control(discrete_diffusion_operator):
@@ -101,7 +101,7 @@ def test_discrete_diffusion_integration_shape(discrete_diffusion_operator, integ
 
 
 def test_discrete_averaging_operator(discrete_averaging_operator, request):
-    matrix = gd.to_array(discrete_averaging_operator.matrix)
+    matrix = md.to_array(discrete_averaging_operator.matrix)
     np.testing.assert_allclose(np.diag(matrix), -1, err_msg="diagonal is not minus one")
     np.testing.assert_array_less(-eps, np.triu(matrix, 1), err_msg="upper diagonal must be non-negative")
     np.testing.assert_array_less(-eps, np.tril(matrix, -1), err_msg="lower diagonal must be non-negative")

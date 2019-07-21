@@ -22,7 +22,7 @@ import sphinx
 
 # -- Project information -----------------------------------------------------
 
-project = 'graph_dynamics'
+project = 'macrodynamics'
 copyright = '2019, Till Hoffmann'
 author = 'Till Hoffmann'
 

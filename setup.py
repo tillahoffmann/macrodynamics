@@ -22,7 +22,7 @@ else:
 
 # Generate extensions
 ext = ".pyx" if USE_CYTHON else ".c"
-filenames = glob.glob("graph_dynamics/*" + ext)
+filenames = glob.glob("macrodynamics/*" + ext)
 ext_modules = [Extension(os.path.splitext(filename)[0].replace("/", "."), [filename])
                for filename in filenames]
 
@@ -38,7 +38,7 @@ tests_require = [
 ]
 
 setup(
-    name='graph_dynamics',
+    name='macrodynamics',
     version="0.1",
     packages=find_packages(),
     ext_modules=ext_modules,

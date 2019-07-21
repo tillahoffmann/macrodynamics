@@ -1,4 +1,4 @@
-graph\_dynamics package
+macrodynamics package
 =======================
 
 Subpackages
@@ -6,23 +6,23 @@ Subpackages
 
 .. toctree::
 
-   graph_dynamics.dynamics
+   macrodynamics.dynamics
 
 Submodules
 ----------
 
-graph\_dynamics.structure module
+macrodynamics.structure module
 --------------------------------
 
-.. automodule:: graph_dynamics.structure
+.. automodule:: macrodynamics.structure
    :members:
    :undoc-members:
    :show-inheritance:
 
-graph\_dynamics.util module
+macrodynamics.util module
 ---------------------------
 
-.. automodule:: graph_dynamics.util
+.. automodule:: macrodynamics.util
    :members:
    :undoc-members:
    :show-inheritance:
@@ -31,7 +31,7 @@ graph\_dynamics.util module
 Module contents
 ---------------
 
-.. automodule:: graph_dynamics
+.. automodule:: macrodynamics
    :members:
    :undoc-members:
    :show-inheritance:

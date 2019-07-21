@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-import graph_dynamics as gd
+import macrodynamics as md
 
 from _test_common import _test_integration, _test_integration_shape
 
@@ -10,7 +10,7 @@ eps = np.finfo(np.float32).eps
 
 
 # Declare fixtures
-homogeneous = gd.list_fixture([True, False], ['homogeneous', 'inhomogeneous'])
+homogeneous = md.list_fixture([True, False], ['homogeneous', 'inhomogeneous'])
 
 
 @pytest.fixture
@@ -25,12 +25,12 @@ def lin_dx(lin_x):
 
 @pytest.fixture
 def coordinate_tensor(lin_x, num_dims):
-    return gd.coordinate_tensor(*[lin_x] * num_dims)
+    return md.coordinate_tensor(*[lin_x] * num_dims)
 
 
 @pytest.fixture
 def connectivity(kernel, lin_x, periodic, num_dims):
-    _, kernel_coordinate_tensor, domain = gd.coordinate_tensors(*[lin_x] * num_dims, periodic=periodic)
+    _, kernel_coordinate_tensor, domain = md.coordinate_tensors(*[lin_x] * num_dims, periodic=periodic)
     return kernel(0, kernel_coordinate_tensor, domain=domain)
 
 
@@ -40,7 +40,7 @@ def density(num_dims, coordinate_tensor, homogeneous, lin_dx):
         density = np.ones(coordinate_tensor.shape[:-1])
     else:
         # Evaluate the distance from the origin
-        distance = gd.evaluate_distance(0, coordinate_tensor, domain=1.0)
+        distance = md.evaluate_distance(0, coordinate_tensor, domain=1.0)
         # Create a density
         density = num_dims / 2 - distance ** 2
     # Normalise it
@@ -51,28 +51,28 @@ def density(num_dims, coordinate_tensor, homogeneous, lin_dx):
 @pytest.fixture
 def initial_conditions(coordinate_tensor, num_dims):
     center = np.random.uniform(0, 1, num_dims)
-    ic = gd.evaluate_gaussian_kernel(coordinate_tensor, center, 1, 0.5 ** 2, domain=None)
+    ic = md.evaluate_gaussian_kernel(coordinate_tensor, center, 1, 0.5 ** 2, domain=None)
     return ic[None]  # Add the first dimension
 
 
 @pytest.fixture
 def continuous_diffusion_operator(connectivity, density, lin_dx):
-    return gd.diffusion.evaluate_continuous_operator(connectivity, density, lin_dx)
+    return md.diffusion.evaluate_continuous_operator(connectivity, density, lin_dx)
 
 
 @pytest.fixture
 def continuous_averaging_operator(connectivity, density, lin_dx):
-    return gd.averaging.evaluate_continuous_operator(connectivity, density, lin_dx)
+    return md.averaging.evaluate_continuous_operator(connectivity, density, lin_dx)
 
 
 @pytest.fixture
 def continuous_oscillation_operator(connectivity, density, lin_dx):
-    return gd.oscillation.evaluate_continuous_operator(connectivity, density, lin_dx)
+    return md.oscillation.evaluate_continuous_operator(connectivity, density, lin_dx)
 
 
 def test_operator_shape_validation():
     with pytest.raises(ValueError):
-        gd.ContinuousOperator(
+        md.ContinuousOperator(
             weight=np.empty((1, 1, 10)),
             kernel_weight_x=np.empty((1, 1, 10)),
             kernel_weight_y=np.empty((1, 1, 10)),
@@ -91,7 +91,7 @@ def test_continuous_diffusion_operator(continuous_diffusion_operator, connectivi
     # Evaluate the properties of the operator
     np.testing.assert_allclose(
         continuous_diffusion_operator.weight,
-        - gd.evaluate_expected_degree(connectivity, density, lin_dx)[None, None],
+        - md.evaluate_expected_degree(connectivity, density, lin_dx)[None, None],
         err_msg="weight must be equal to the negative expected degree"
     )
     np.testing.assert_allclose(continuous_diffusion_operator.kernel_weight_x, 1,
@@ -107,7 +107,7 @@ def test_continuous_averaging_operator(continuous_averaging_operator, connectivi
     np.testing.assert_allclose(continuous_averaging_operator.weight, -1, err_msg="weight must be equal to minus one")
     np.testing.assert_allclose(
         continuous_averaging_operator.kernel_weight_x,
-        1 / gd.evaluate_expected_degree(connectivity, density, lin_dx)[None, None],
+        1 / md.evaluate_expected_degree(connectivity, density, lin_dx)[None, None],
         err_msg="kernel_weight_x must be equal to the inverse expected degree"
         )
     np.testing.assert_allclose(continuous_averaging_operator.kernel_weight_y, density[None, None],
@@ -155,14 +155,14 @@ def test_continuous_diffusion_integration_shape(continuous_diffusion_operator, i
 def test_continous_oscillation_operator(continuous_oscillation_operator, density, coordinate_tensor,
                                         num_dims, periodic):
     center = np.random.uniform(0, 1, num_dims)
-    ic = gd.evaluate_gaussian_kernel(coordinate_tensor, center, 1, 0.05 ** 2)
+    ic = md.evaluate_gaussian_kernel(coordinate_tensor, center, 1, 0.05 ** 2)
     _test_integration(continuous_oscillation_operator, [ic, np.zeros_like(ic)])
 
 
 def test_continous_oscillation_operator_with_control(continuous_oscillation_operator, density,
                                                      coordinate_tensor, num_dims, periodic):
     center = np.random.uniform(0, 1, num_dims)
-    ic = gd.evaluate_gaussian_kernel(coordinate_tensor, center, 1, 0.05 ** 2)
+    ic = md.evaluate_gaussian_kernel(coordinate_tensor, center, 1, 0.05 ** 2)
     ic = [ic, np.zeros_like(ic)]
     continuous_oscillation_operator.control = np.ones_like(ic)
     _test_integration(continuous_oscillation_operator, ic)
@@ -175,9 +175,9 @@ def test_continuous_oscillation_optimal_control(continuous_oscillation_operator,
         pytest.skip()
     # Define the inputs
     t = np.sqrt(2)
-    ic = gd.evaluate_gaussian_kernel(coordinate_tensor, .25, 1, 0.05 ** 2)
+    ic = md.evaluate_gaussian_kernel(coordinate_tensor, .25, 1, 0.05 ** 2)
     ic = [ic, np.zeros_like(ic)]
-    setpoint = gd.evaluate_gaussian_kernel(coordinate_tensor, .75, 1, 0.05 ** 2)
+    setpoint = md.evaluate_gaussian_kernel(coordinate_tensor, .75, 1, 0.05 ** 2)
     setpoint = [setpoint, np.zeros_like(setpoint)]
 
     z_nc = continuous_oscillation_operator.integrate_analytic(ic, t)
@@ -194,4 +194,4 @@ def test_continuous_oscillation_optimal_control(continuous_oscillation_operator,
 
     # Assert that we get the "right" result if the control weight is zero
     if control_weight == 0:
-        gd.assert_correlated(setpoint, z_wc)
+        md.assert_correlated(setpoint, z_wc)

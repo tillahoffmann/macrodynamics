@@ -1,7 +1,7 @@
-graph_dynamics
+macrodynamics
 ==============
 
 .. toctree::
    :maxdepth: 4
 
-   graph_dynamics
+   macrodynamics

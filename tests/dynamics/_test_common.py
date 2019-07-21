@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-import graph_dynamics as gd
+import macrodynamics as md
 
 
 def _test_integration(operator, z0=None, time=1, num=200):
@@ -22,7 +22,7 @@ def _test_integration(operator, z0=None, time=1, num=200):
     # Run the integration
     z_numeric = operator.integrate_numeric(z0, time, callback=callback)
     z_naive = operator.integrate_naive(z0, np.linspace(0, time, num) if np.isscalar(time) else time)[-1]
-    gd.assert_correlated(z_naive, z_numeric)
+    md.assert_correlated(z_naive, z_numeric)
 
     assert getattr(callback, 'called', True), "callback not called"
 
@@ -31,7 +31,7 @@ def _test_integration(operator, z0=None, time=1, num=200):
 
     # Make sure the values match
     z_analytic = operator.integrate_analytic(z0, time)
-    gd.assert_correlated(z_numeric, z_analytic)
+    md.assert_correlated(z_numeric, z_analytic)
     return z0, z_numeric, z_analytic
 
 
