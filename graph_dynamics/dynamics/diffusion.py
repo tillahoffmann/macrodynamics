@@ -4,23 +4,23 @@ from scipy import sparse
 from ..structure import evaluate_expected_degree
 from .discrete import DiscreteOperator
 from .continuous import ContinuousOperator
-from ..util import ignore_scipy_issue_9093
+from ..util import _ignore_scipy_issue_9093
 
 
-@ignore_scipy_issue_9093
+@_ignore_scipy_issue_9093
 def evaluate_discrete_operator(adjacency):
     """
     Evaluate the differential operator for diffusion on a graph.
 
     Parameters
     ----------
-    adjacency : np.ndarray
-        adjacency matrix
+    adjacency : numpy.ndarray or scipy.sparse.spmatrix
+        Adjacency matrix.
 
     Returns
     -------
     operator : DiscreteOperator
-        differential operator for diffusion
+        Differential operator for diffusion.
     """
     out_degree = adjacency.sum(axis=0)
     if sparse.issparse(adjacency):
@@ -36,19 +36,19 @@ def evaluate_continuous_operator(connectivity, density, dx, **kwargs):
 
     Parameters
     ----------
-    connectivity : np.ndarray
-        evaluated connectivity kernel
-    density : np.ndarray or float
-        density of nodes (use a scalar for uniform densities)
-    dx : np.ndarray or float
-        spacing of sample points
+    connectivity : numpy.ndarray
+        Evaluated connectivity kernel.
+    density : numpy.ndarray or float
+        Density of nodes (use a scalar for uniform densities).
+    dx : numpy.ndarray or float
+        Spacing of sample points.
+    **kwargs : dict
+        Keyword arguments passed to `ContinuousOperator.from_matrix`.
 
     Returns
     -------
     operator : ContinuousOperator
-        differential operator for diffusion
-    **kwargs : dict
-        additional keyword arguments passed to `ContinuousOperator.from_matrix`
+        Differential operator for diffusion.
     """
     # The nodes lose walkers proportional to their degree
     weight = - evaluate_expected_degree(connectivity, density, dx)

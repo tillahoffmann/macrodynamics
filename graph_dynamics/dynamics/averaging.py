@@ -4,23 +4,23 @@ from scipy import sparse
 from ..structure import evaluate_expected_degree
 from .discrete import DiscreteOperator
 from .continuous import ContinuousOperator
-from ..util import ignore_scipy_issue_9093
+from ..util import _ignore_scipy_issue_9093
 
 
-@ignore_scipy_issue_9093
+@_ignore_scipy_issue_9093
 def evaluate_discrete_operator(adjacency):
     """
     Evaluate the differential operator for opinion averaging on a graph.
 
     Parameters
     ----------
-    adjacency : np.ndarray
-        adjacency matrix
+    adjacency : numpy.ndarray or scipy.sparse.spmatrix
+        Adjacency matrix.
 
     Returns
     -------
     operator : DiscreteOperator
-        differential operator for opinion averaging
+        Differential operator for opinion averaging.
     """
     n = adjacency.shape[0]
     in_degree = adjacency.sum(axis=1)
@@ -39,19 +39,19 @@ def evaluate_continuous_operator(connectivity, density, dx, **kwargs):
 
     Parameters
     ----------
-    connectivity : np.ndarray
-        evaluated connectivity kernel
-    density : np.ndarray or float
-        density of nodes (use a scalar for uniform densities)
-    dx : np.ndarray or float
-        spacing of sample points
+    connectivity : numpy.ndarray
+        Evaluated connectivity kernel.
+    density : numpy.ndarray or float
+        Density of nodes (use a scalar for uniform densities).
+    dx : numpy.ndarray or float
+        Spacing of sample points.
     **kwargs : dict
-        additional keyword arguments passed to `ContinuousOperator.from_matrix`
+        Keyword arguments passed to `ContinuousOperator.from_matrix`.
 
     Returns
     -------
     operator : ContinuousOperator
-        differential operator for opinion averaging
+        Differential operator for opinion averaging.
     """
     # The contributions are down-weighted by the average degree of the nodes
     kernel_weight_x = 1 / evaluate_expected_degree(connectivity, density, dx)

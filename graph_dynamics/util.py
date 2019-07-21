@@ -16,16 +16,21 @@ def smoothed_statistic(points, data, values, precision, statistic='mean'):
 
     Parameters
     ----------
-    points : np.ndarray
-        points at which to evaluate the statistic with shape `(..., d)`
-    data : np.ndarray
-        sample coordinates with shape `(n, d)`
-    values : np.ndarray
-        values associated with the data of shape `n`
-    precision : np.ndarray
-        precision (matrix) for the Gaussian kernel
-    statistic : np.ndarray
-        statistic to evaluate (one of 'count', 'sum', 'mean', 'var')
+    points : numpy.ndarray
+        Points at which to evaluate the statistic with shape `(..., d)`.
+    data : numpy.ndarray
+        Sample coordinates with shape `(n, d)`.
+    values : numpy.ndarray
+        Values associated with the data of shape `n`.
+    precision : numpy.ndarray
+        Precision (matrix) for the Gaussian kernel.
+    statistic : numpy.ndarray
+        Statistic to evaluate (one of 'count', 'sum', 'mean', 'var').
+
+    Returns
+    -------
+    statistic : numpy.ndarray
+        Statistic evaluated at the desired points.
     """
     if statistic == 'count':
         return smoothed_sum(points, data, np.ones(data.shape[0]), precision)
@@ -44,12 +49,23 @@ def smoothed_statistic(points, data, values, precision, statistic='mean'):
         raise KeyError(statistic)
 
 
-def symmetric_vminmax(*x):
+def symmetric_vminmax(*xs):
     """
-    Evaluate keyword arguments for plotting functions taking `vmin` and `vmax` arguments.
+    Evaluate keyword arguments for plotting functions taking `vmin` and `vmax` arguments such that
+    `vmax` is the maximum of the absolute value of `*xs` and `vmin = -vmax`.
+
+    Parameters
+    ----------
+    *xs : list
+        Value sequence for which to evaluate the maximum absolute value.
+
+    Returns
+    -------
+    kwargs : dict
+        Keyword arguments to pass to a plotting function.
     """
     # Map the maximum of the absolute value over the arguments
-    vmax = max([np.max(np.abs(_x)) for _x in x])
+    vmax = max([np.max(np.abs(x)) for x in xs])
     return {
         'vmax': vmax,
         'vmin': -vmax,
@@ -62,17 +78,17 @@ def coordinate_tensor(*xi, roll=True, **kwargs):
 
     Parameters
     ----------
-    xi : array_like
-        one-dimensional coordinate vectors
+    *xi : array_like
+        One-dimensional coordinate vectors.
     roll : bool
-        whether to roll the dimension axis to the last position
-    kwargs : dict
-        keyword arguments passed to `np.meshgrid`
+        Whether to roll the dimension axis to the last position.
+    **kwargs : dict
+        Keyword arguments passed to `np.meshgrid`.
 
     Returns
     -------
-    tensor : np.ndarray
-        coordinate tensor
+    tensor : numpy.ndarray
+        Coordinate tensor.
     """
     xi = np.asarray(np.meshgrid(*xi, **kwargs))
     if roll:
@@ -86,17 +102,17 @@ def convolve(a, b, dx=1):
 
     Parameters
     ----------
-    a : np.ndarray
-        first input
-    b : np.ndarray
-        second input
-    dx : np.ndarray or float
-        spacing of sample points
+    a : numpy.ndarray
+        First input array.
+    b : numpy.ndarray
+        Second input array.
+    dx : numpy.ndarray or float
+        Spacing of sample points.
 
     Returns
     -------
-    c : np.ndarray
-        convolved inputs
+    c : numpy.ndarray
+        Convolved inputs.
     """
     # Compute the differential volume element
     dV = np.prod(np.ones(np.ndim(a)) * dx)
@@ -116,21 +132,21 @@ def map_colors(x, cmap=None, norm=None, alpha=None, **kwargs):
 
     Parameters
     ----------
-    x : np.ndarray
-        input array with shape `(...)`
+    x : numpy.ndarray
+        Input array with shape `(...)`.
     cmap : str
-        color map
+        Color map.
     norm : type or matplotlib.colors.Normalize
-        normalization
-    alpha : np.ndarray
-        opacity values with shape `(...)`
-    kwargs : dict
-        keyword arguments passed to `norm`
+        Normalization.
+    alpha : numpy.ndarray
+        Opacity values with shape `(...)`.
+    **kwargs : dict
+        Keyword arguments passed to `norm`.
 
     Returns
     -------
-    colors : np.ndarray
-        array of RGBA colors with shape `(..., 4)`
+    colors : numpy.ndarray
+        Array of RGBA colors with shape `(..., 4)`.
     """
     if norm is None:
         norm = mcolors.Normalize
@@ -148,6 +164,16 @@ def map_colors(x, cmap=None, norm=None, alpha=None, **kwargs):
 def lazy_property(func):
     """
     Lazy property decorator.
+
+    Parameters
+    ----------
+    func : callable
+        Function to decorate as a lazy property.
+
+    Returns
+    -------
+    decorated : property
+        Function acting as a lazy property.
     """
     @property
     @ft.wraps(func)
@@ -164,6 +190,22 @@ def lazy_property(func):
 def list_fixture(params, ids=None, **kwargs):
     """
     Shorthand for creating fixtures that return multiple values.
+
+    Parameters
+    ----------
+    params : list
+        List of parameters which will cause multiple invocations of the fixture function and all of
+        the tests using it.
+    ids : list
+        List of string ids each corresponding to the `params` so that they are part of the test id.
+        If no `ids` are provided they will be generated automatically from the `params`.
+    **kwargs : dict
+        Keyword arguments passed to `pytest.fixture`.
+
+    Returns
+    -------
+    fixture : pytest.fixture
+        Fixture with multiple parameter values.
     """
     import pytest
 
@@ -179,17 +221,17 @@ def origin_array(arr, newshape, axes=None):
 
     Parameters
     ----------
-    arr : np.ndarray
-        array to extract the center from
+    arr : numpy.ndarray
+        Array to extract the center from.
     newshape : tuple
-        shape of the region to extract
+        Shape of the region to extract.
     axes : tuple
-        axes along which to extract the region (default is all axes)
+        Axes along which to extract the region (default is all axes).
 
     Returns
     -------
-    origin : np.ndarray
-        array extracted from `arr` in the vicinity of the origin
+    origin : numpy.ndarray
+        Array extracted from `arr` in the vicinity of the origin.
     """
     # Get a vector of axes
     if axes is None:
@@ -216,12 +258,12 @@ def next_fast_shape(shape):
     Parameters
     ----------
     shape : tuple
-        shape to start searching from
+        Shape to start searching from.
 
     Returns
     -------
     fast_shape : tuple
-        the first 5-smooth shape greater than or equal to the input shape
+        The first 5-smooth shape greater than or equal to the input shape.
     """
     return tuple(map(next_fast_len, shape))
 
@@ -232,10 +274,18 @@ def first_element(arr, axis=None, squeeze=False):
 
     Parameters
     ----------
-    arr : np.ndarray
-        array for which to return the first element
+    arr : numpy.ndarray
+        Array for which to return the first element.
     axis : tuple
-        axis along which to return the first element
+        Axis along which to return the first element (default is all axes).
+    squeeze : tuple or bool
+        Axis along which to squeeze the first element if possible or `True` to squeeze along all
+        axes (default is no axes).
+
+    Returns
+    -------
+    element : numpy.ndarray
+        First element along the specified `axes`.
     """
     arr = np.asarray(arr)
     if axis is None:
@@ -254,7 +304,23 @@ def first_element(arr, axis=None, squeeze=False):
 
 def is_homogeneous(arr, axis=None, *args, **kwargs):
     """
-    Check whether all elements of an array are (almost) equal along the given dimensions.
+    Check whether all elements of an array are (almost) equal along the given axes.
+
+    Parameters
+    ----------
+    arr : array_like
+        Array to check for homogeneity.
+    axis : tuple
+        Axes along which to check for homogeneity (default is all axes).
+    *args : list
+        Positional arguments passed to `np.isclose`.
+    **kwargs : dict
+        Keyword arguments passed to `np.isclose`.
+
+    Returns
+    -------
+    homogeneous : bool
+        Whether the array is homogeneous along all the specified axes.
     """
     if axis is not None:
         axis = tuple(np.atleast_1d(axis))
@@ -267,23 +333,23 @@ def coordinate_tensors(*xi, periodic, next_fast_len=True, **kwargs):
 
     Parameters
     ----------
-    xi : array_like
-        one-dimensional coordinate vectors
+    *xi : array_like
+        One-dimensional coordinate vectors.
     periodic : bool
-        whether to assume periodic boundary conditions
+        Whether to assume periodic boundary conditions.
     next_fast_len : bool
-        whether to use the next best FFT size
-    kwargs : dict
-        keyword arguments passed to `coordinate_tensor`
+        Whether to use the next best FFT size.
+    **kwargs : dict
+        Keyword arguments passed to `coordinate_tensor`.
 
     Returns
     -------
-    coordinate_tensor : np.ndarray
-        coordinate tensor for the field
-    kernel_coordinate_tensor : np.ndarray
-        coordinate tensor for the kernel (identical to `coordinate_tensor` if `periodic == True`)
-    domain : np.ndarray
-        domain for the periodicity of the kernel with one entry for each dimension
+    coordinate_tensor : numpy.ndarray
+        Coordinate tensor for the field.
+    kernel_coordinate_tensor : numpy.ndarray
+        Coordinate tensor for the kernel (identical to `coordinate_tensor` if `periodic == True`).
+    domain : numpy.ndarray
+        Domain for the periodicity of the kernel with one entry for each dimension.
     """
     dxi = []
     lengths = []
@@ -317,41 +383,61 @@ def coordinate_tensors(*xi, periodic, next_fast_len=True, **kwargs):
 def to_array(arr):
     """
     Convert to a dense array.
+
+    Parameters
+    ----------
+    arr : array_like
+        Sparse or dense array to convert to a dense array.
+
+    Returns
+    -------
+    dense : numpy.ndarray
+        Dense array.
     """
     if sparse.issparse(arr):
         return arr.toarray()
-    return arr
+    return np.asarray(arr)
 
 
-def edgelist_to_sparse(edgelist, shape=None, weight=None):
+def edgelist_to_sparse(edgelist, num_nodes, weight=None):
     """
     Convert an edgelist to a sparse adjacency matrix.
 
     Parameters
     ----------
-    edgelist : np.ndarray
-        list of edges with shape `(m, 2)` where `m` is the number of edges
-    shape : int or tuple
-        shape of the adjacency matrix
-    weight : np.ndarray
-        weights associated with the edges
+    edgelist : numpy.ndarray
+        List of edges with shape `(m, 2)` where `m` is the number of edges.
+    num_nodes : int
+        Number of nodes.
+    weight : numpy.ndarray
+        Weights associated with the edges.
 
     Returns
     -------
     sparse : csr_matrix
-        sparse adjacency matrix
+        Sparse adjacency matrix.
     """
-    if isinstance(shape, int):
-        shape = (shape, shape)
     if weight is None:
         weight = np.ones(len(edgelist))
-    adjacency = sparse.coo_matrix((weight, np.transpose(edgelist)), shape)
+    adjacency = sparse.coo_matrix((weight, np.transpose(edgelist)), (num_nodes, num_nodes))
     return adjacency.tocsr()
 
 
 def add_leading_dims(x, n):
     """
     Add `n` leading dimensions of size `1` to `x`.
+
+    Parameters
+    ----------
+    x : array_like
+        Array to which to add leading dimensions.
+    n : int
+        Number of leading dimensions to add.
+
+    Returns
+    -------
+    y : numpy.ndarray
+        Array with `n` leading dimensions added.
     """
     x = np.asarray(x)
     return x.reshape((1,) * n + x.shape)
@@ -363,17 +449,19 @@ def plot_edges(x, edges, ax=None, **kwargs):
 
     Parameters
     ----------
-    x : np.ndarray
-        positions of nodes
-    edges : np.ndarray
-        edgelist
+    x : numpy.ndarray
+        Positions of nodes.
+    edges : numpy.ndarray
+        Edgelist.
+    ax : matplotlib.axes.Axes
+        Axes in which to plot the edges.
     **kwargs : dict
-        parameters passed to the `LineCollection` created by this function
+        Keyword arguments passed to the `LineCollection` created by this function.
 
     Returns
     -------
     collection : LineCollection
-        collection of edges
+        Collection of edges.
     """
     default_kwargs = {
         'color': 'k',
@@ -388,19 +476,40 @@ def plot_edges(x, edges, ax=None, **kwargs):
     return collection
 
 
-def label_axes(*axes, x=0.05, y=0.95, va='top', offset=0, labels=None, **kwargs):
+def label_axes(*axes, x=0.05, y=0.95, offset=0, labels=None, **kwargs):
     """
     Attach alphabetical labels to a sequence of axes.
+
+    Parameters
+    ----------
+    *axes : list
+        Sequence of axes to label.
+    x : float
+        Horizontal label position.
+    y : float
+        Vertical label position.
+    offset : int
+        Offset for axis labels.
+    labels : iterable
+        Sequence of axis labels.
+    **kwargs : dict
+        Keyword arguments passed to `matplotlib.axes.Axes.text`.
+
+    Returns
+    -------
+    elements : list
+        List of text elements representing labels.
     """
     labels = labels or 'abcdefghijklmnopqrstuvwxyz'
     elements = []
+    va = kwargs.pop('va', kwargs.pop('verticalalignment', 'top'))
     for i, ax in enumerate(np.ravel(axes)):
         elements.append(ax.text(x, y, f'({labels[i + offset]})', va=va, transform=ax.transAxes,
                         **kwargs))
     return elements
 
 
-def ignore_scipy_issue_9093(function):
+def _ignore_scipy_issue_9093(function):
     """
     Ignore warnings generated by https://github.com/scipy/scipy/issues/9093.
     """
@@ -413,8 +522,20 @@ def ignore_scipy_issue_9093(function):
 
 
 def nexpm1(a, x):
-    """
-    Evaluates `(exp(a * x) - 1) / a` safely.
+    r"""
+    Evaluates :math:`\frac{\exp(a x) - 1}{a}` safely.
+
+    Parameters
+    ----------
+    a : numpy.ndarray
+        Scale factors.
+    x : numpy.ndarray
+        Input values.
+
+    Returns
+    -------
+    y : numpy.ndarray
+        Elementwise evaluation of the desired function.
     """
     fltr = a == 0
     return np.where(fltr, x, special.expm1(a * x) / np.where(fltr, 1, a))
