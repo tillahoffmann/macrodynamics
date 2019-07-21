@@ -19,7 +19,7 @@ coverage==4.5.3           # via pytest-cov
 cycler==0.10.0            # via matplotlib
 decorator==4.4.0          # via ipython, networkx, traitlets
 defusedxml==0.6.0         # via nbconvert
-docutils==0.14            # via sphinx
+docutils==0.15            # via sphinx
 entrypoints==0.3          # via nbconvert
 idna==2.8                 # via requests
 imagesize==1.1.0          # via sphinx
@@ -29,7 +29,7 @@ ipython-genutils==0.2.0   # via nbformat, notebook, traitlets
 ipython==7.6.1            # via ipykernel
 isort==4.3.21             # via pylint
 jedi==0.14.1              # via ipython
-jinja2==2.10.1            # via nbconvert, notebook, sphinx
+jinja2==2.10.1            # via nbconvert, notebook, numpydoc, sphinx
 json5==0.8.5              # via jupyterlab-server
 jsonschema==3.0.1         # via jupyterlab-server, nbformat
 jupyter-client==5.3.1     # via ipykernel, notebook
@@ -48,6 +48,7 @@ nbformat==4.4.0           # via nbconvert, notebook
 networkx==2.3
 notebook==6.0.0           # via jupyterlab, jupyterlab-server
 numpy==1.16.4             # via matplotlib, scipy
+numpydoc==0.9.1
 packaging==19.0           # via pytest, sphinx
 pandocfilters==1.4.2      # via nbconvert
 parso==0.5.1              # via jedi
@@ -75,7 +76,7 @@ send2trash==1.5.0         # via notebook
 shapely==1.6.4.post2
 six==1.12.0               # via astroid, bleach, cycler, jsonschema, packaging, prompt-toolkit, pyrsistent, python-dateutil, traitlets
 snowballstemmer==1.9.0    # via sphinx
-sphinx==2.1.2
+sphinx==2.1.2             # via numpydoc
 sphinxcontrib-applehelp==1.0.1  # via sphinx
 sphinxcontrib-devhelp==1.0.1  # via sphinx
 sphinxcontrib-htmlhelp==1.0.2  # via sphinx
