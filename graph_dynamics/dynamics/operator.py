@@ -110,7 +110,7 @@ class Operator:
         method : str
             Integration method to use. See `scipy.integrate.ode.solve_ivp` for details.
         **kwargs : dict
-            Additional keyword arguments passed to `scipy.integrate.ode.solve_ivp`.
+            Keyword arguments passed to `scipy.integrate.ode.solve_ivp`.
 
         Returns
         -------
@@ -184,7 +184,7 @@ class Operator:
         method : str
             Method used for simulation (one of 'analytic', 'numeric' or 'naive').
         **kwargs : dict
-            Additional keyword arguments passed to the selected integration `method`.
+            Keyword arguments passed to the selected integration `method`.
 
         Returns
         -------

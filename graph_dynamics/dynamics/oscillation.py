@@ -19,7 +19,7 @@ def evaluate_discrete_operator(adjacency, angular_frequency=1, **kwargs):
     angular_frequency : numpy.ndarray
         Angular frequency of each individual oscillator.
     **kwargs : dict
-        Additional keyword arguments passed to `DiscreteOperator.from_tensor`.
+        Keyword arguments passed to `DiscreteOperator.from_tensor`.
 
     Returns
     -------
@@ -57,7 +57,7 @@ def evaluate_continuous_operator(connectivity, density, dx, angular_frequency=1,
     angular_frequency : numpy.ndarray
         Angular frequency of each individual oscillator.
     **kwargs : dict
-        Additional keyword arguments passed to `ContinuousOperator`.
+        Keyword arguments passed to `ContinuousOperator`.
 
     Returns
     -------
