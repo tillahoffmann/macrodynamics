@@ -1,53 +1,53 @@
-graph\_dynamics.dynamics package
+macrodynamics.dynamics package
 ================================
 
 Submodules
 ----------
 
-graph\_dynamics.dynamics.averaging module
+macrodynamics.dynamics.averaging module
 -----------------------------------------
 
-.. automodule:: graph_dynamics.dynamics.averaging
+.. automodule:: macrodynamics.dynamics.averaging
    :members:
    :undoc-members:
    :show-inheritance:
 
-graph\_dynamics.dynamics.continuous module
+macrodynamics.dynamics.continuous module
 ------------------------------------------
 
-.. automodule:: graph_dynamics.dynamics.continuous
+.. automodule:: macrodynamics.dynamics.continuous
    :members:
    :undoc-members:
    :show-inheritance:
 
-graph\_dynamics.dynamics.diffusion module
+macrodynamics.dynamics.diffusion module
 -----------------------------------------
 
-.. automodule:: graph_dynamics.dynamics.diffusion
+.. automodule:: macrodynamics.dynamics.diffusion
    :members:
    :undoc-members:
    :show-inheritance:
 
-graph\_dynamics.dynamics.discrete module
+macrodynamics.dynamics.discrete module
 ----------------------------------------
 
-.. automodule:: graph_dynamics.dynamics.discrete
+.. automodule:: macrodynamics.dynamics.discrete
    :members:
    :undoc-members:
    :show-inheritance:
 
-graph\_dynamics.dynamics.operator module
+macrodynamics.dynamics.operator module
 ----------------------------------------
 
-.. automodule:: graph_dynamics.dynamics.operator
+.. automodule:: macrodynamics.dynamics.operator
    :members:
    :undoc-members:
    :show-inheritance:
 
-graph\_dynamics.dynamics.oscillation module
+macrodynamics.dynamics.oscillation module
 -------------------------------------------
 
-.. automodule:: graph_dynamics.dynamics.oscillation
+.. automodule:: macrodynamics.dynamics.oscillation
    :members:
    :undoc-members:
    :show-inheritance:
@@ -56,7 +56,7 @@ graph\_dynamics.dynamics.oscillation module
 Module contents
 ---------------
 
-.. automodule:: graph_dynamics.dynamics
+.. automodule:: macrodynamics.dynamics
    :members:
    :undoc-members:
    :show-inheritance:

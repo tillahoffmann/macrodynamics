@@ -105,6 +105,6 @@ venv.bak/
 
 .DS_Store
 .vscode/
-graph_dynamics/**/*.html
+macrodynamics/**/*.html
 *.tmp
 playground

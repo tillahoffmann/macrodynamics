@@ -1,6 +1,6 @@
 import itertools as it
 import pytest
-import graph_dynamics as gd
+import macrodynamics as md
 import numpy as np
 from matplotlib import colors as mcolors
 from matplotlib import pyplot as plt
@@ -16,7 +16,7 @@ def test_smoothed_statistic(statistic):
     xx, yy = np.meshgrid(x, x)
     points = np.transpose((xx, yy))
     # Evaluate the statistic and check its shape
-    actual = gd.smoothed_statistic(points, data, values, 100, statistic)
+    actual = md.smoothed_statistic(points, data, values, 100, statistic)
     assert actual.shape == xx.shape, "unexpected shape"
     if statistic == 'count':
         np.testing.assert_allclose(np.sum(actual) * dx ** 2, len(data), 0.01)
@@ -28,7 +28,7 @@ def test_smoothed_statistic(statistic):
 ))
 def test_coordinate_tensor(num_dims, roll):
     x = np.linspace(0, 1, 50)
-    tensor = gd.coordinate_tensor(*[x] * num_dims, roll=roll)
+    tensor = md.coordinate_tensor(*[x] * num_dims, roll=roll)
     if roll:
         expected_shape = (50, ) * num_dims + (num_dims, )
     else:
@@ -43,7 +43,7 @@ def test_coordinate_tensor(num_dims, roll):
 ))
 def test_map_colors(shape, norm, alpha):
     x = np.random.uniform(0, 1, shape)
-    colors, _ = gd.map_colors(x, norm=norm, alpha=x if alpha else None)
+    colors, _ = md.map_colors(x, norm=norm, alpha=x if alpha else None)
     assert colors.shape == x.shape + (4,), "unexpected shape"
     if not alpha:
         np.testing.assert_equal(colors[..., 3], 1, "unexpected alpha values")
@@ -65,7 +65,7 @@ def test_extract_array(newshape, axes):
         expected_shape[list(axes)] = newshape
 
     # Extract the array
-    actual = gd.origin_array(arr, newshape, axes)
+    actual = md.origin_array(arr, newshape, axes)
     np.testing.assert_equal(actual.shape, expected_shape, "unexpected new shape")
 
 
@@ -74,7 +74,7 @@ def test_extract_array(newshape, axes):
     [(11, 13), (12, 15)],
 ])
 def test_next_fast_shape(shape, desired):
-    actual = gd.next_fast_shape(shape)
+    actual = md.next_fast_shape(shape)
     assert actual == desired, "expected %s but got %s for next fast shape" % (desired, actual)
 
 
@@ -88,7 +88,7 @@ def test_next_fast_shape(shape, desired):
     ([[1, 1], [2, 3]], 1, [True, False]),
 ])
 def test_is_uniform(x, axes, homogeneous):
-    np.testing.assert_equal(gd.is_homogeneous(x, axes), homogeneous)
+    np.testing.assert_equal(md.is_homogeneous(x, axes), homogeneous)
 
 
 @pytest.mark.parametrize('next_fast_len', [True, False])
@@ -96,7 +96,7 @@ def test_coordinate_tensors(num_lin, num_dims, periodic, next_fast_len):
     if periodic and next_fast_len:
         pytest.skip()
     xi = [np.linspace(0, 1, num_lin, endpoint=not periodic)] * num_dims
-    coordinate_tensor, kernel_coordinate_tensor, domain = gd.coordinate_tensors(
+    coordinate_tensor, kernel_coordinate_tensor, domain = md.coordinate_tensors(
         *xi, periodic=periodic, next_fast_len=next_fast_len
     )
 
@@ -116,14 +116,14 @@ def test_edgelist_to_sparse(weight):
     dense = np.zeros((num_nodes, num_nodes))
     i, j = edgelist.T
     dense[i, j] = 1 if weight is None else weight
-    sparse_ = gd.edgelist_to_sparse(edgelist, num_nodes, weight)
+    sparse_ = md.edgelist_to_sparse(edgelist, num_nodes, weight)
     assert sparse.issparse(sparse_)
     np.testing.assert_allclose(sparse_.toarray(), dense, err_msg='unexpected sparse adjacency')
 
 
 def test_add_leading_dims():
     x = np.random.normal(0, 1, (3, 4, 5, 6))
-    y = gd.add_leading_dims(x, 3)
+    y = md.add_leading_dims(x, 3)
     assert y.shape[:3] == (1, 1, 1)
     assert y.shape[3:] == x.shape
     np.testing.assert_equal(x, y[0, 0, 0])
@@ -131,7 +131,7 @@ def test_add_leading_dims():
 
 def test_symmetric_vminmax():
     x = np.random.normal(0, 1, (30, 40))
-    kwargs = gd.symmetric_vminmax(*x)
+    kwargs = md.symmetric_vminmax(*x)
     assert kwargs['vmax'] == np.abs(x).max()
 
 
@@ -162,16 +162,16 @@ def test_plot_edges():
     plt.subplots()
     x = np.random.normal(0, 1, (100, 2))
     edgelist = np.random.randint(x.shape[0], size=(50, 2))
-    collection = gd.plot_edges(x, edgelist)
+    collection = md.plot_edges(x, edgelist)
     assert len(collection.get_segments()) == 50
 
 
 def test_label_axes():
     fig, axes = plt.subplots(2, 2)
-    assert len(gd.label_axes(axes)) == 4
-    assert len(gd.label_axes(*axes)) == 4
+    assert len(md.label_axes(axes)) == 4
+    assert len(md.label_axes(*axes)) == 4
 
 
 def test_first_element():
     x = np.random.normal(0, 1, (10, 10))
-    np.testing.assert_array_equal(x[:, 0], gd.first_element(x, 1, True))
+    np.testing.assert_array_equal(x[:, 0], md.first_element(x, 1, True))

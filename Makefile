@@ -15,7 +15,7 @@ clean/tests :
 	rm -rf .pytest_cache
 
 tests :
-	py.test tests --lf --cov=graph_dynamics --cov-report=html --cov-report=term-missing \
+	py.test tests --lf --cov=macrodynamics --cov-report=html --cov-report=term-missing \
 		--cov-fail-under=100
 
 clean/docs :
@@ -25,4 +25,4 @@ docs :
 	sphinx-build docs docs/build
 
 docs/api :
-	sphinx-apidoc --ext-intersphinx --ext-mathjax -o docs graph_dynamics
+	sphinx-apidoc --ext-intersphinx --ext-mathjax -o docs macrodynamics

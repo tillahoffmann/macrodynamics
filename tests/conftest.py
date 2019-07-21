@@ -3,7 +3,7 @@ import matplotlib as mpl
 mpl.use('Agg')
 import numpy as np
 import pytest
-import graph_dynamics as gd
+import macrodynamics as md
 
 
 SEED = np.random.randint(2**16)
@@ -14,11 +14,11 @@ def seed_rng(request):
 
 
 # Define general fixtures
-kernel = gd.list_fixture([
-    ft.partial(gd.evaluate_uniform_kernel, norm=0.05),
-    ft.partial(gd.evaluate_gaussian_kernel, norm=1, cov=0.05 ** 2),
-    ft.partial(gd.evaluate_tophat_kernel, norm=1, cov=0.05 ** 2),
-    ft.partial(gd.evaluate_laplace_kernel, norm=1, cov=0.05 ** 2),
+kernel = md.list_fixture([
+    ft.partial(md.evaluate_uniform_kernel, norm=0.05),
+    ft.partial(md.evaluate_gaussian_kernel, norm=1, cov=0.05 ** 2),
+    ft.partial(md.evaluate_tophat_kernel, norm=1, cov=0.05 ** 2),
+    ft.partial(md.evaluate_laplace_kernel, norm=1, cov=0.05 ** 2),
 ], [
     'uniform_kernel',
     'gaussian_kernel',
@@ -26,12 +26,12 @@ kernel = gd.list_fixture([
     'laplace_kernel',
 ])
 
-num_dims = gd.list_fixture([2, 1], ['2d', '1d'])
+num_dims = md.list_fixture([2, 1], ['2d', '1d'])
 
-integration_method = gd.list_fixture(['analytic', 'numeric', 'naive'])
+integration_method = md.list_fixture(['analytic', 'numeric', 'naive'])
 
-time = gd.list_fixture([1, [0, 0.25, 0.5, 0.75, 1]])
+time = md.list_fixture([1, [0, 0.25, 0.5, 0.75, 1]])
 
-periodic = gd.list_fixture([True, False], ['periodic', 'non-periodic'])
+periodic = md.list_fixture([True, False], ['periodic', 'non-periodic'])
 
-num_lin = gd.list_fixture([50, 51])
+num_lin = md.list_fixture([50, 51])
