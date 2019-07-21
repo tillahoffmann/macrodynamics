@@ -11,8 +11,8 @@ class Operator:
 
     Parameters
     ----------
-    control : np.ndarray
-        static control to apply to the dynamics
+    control : numpy.ndarray
+        Static control to apply to the dynamics.
     """
     def __init__(self, control=None):
         self._control = None
@@ -30,7 +30,7 @@ class Operator:
 
     @lazy_property
     def shape(self):
-        """tuple : shape of the state array"""
+        """tuple : Shape of the state array."""
         raise NotImplementedError
 
     def evaluate_gradient(self, z, t=None):
@@ -39,10 +39,15 @@ class Operator:
 
         Parameters
         ----------
-        z : np.ndarray
-            state array
+        z : numpy.ndarray
+            State for which to evaluate the gradient.
         t : float
-            time
+            Time at which to evaluate the gradient.
+
+        Returns
+        -------
+        grad : numpy.ndarray
+            Gradient for the dynamics with the same shape as `z`.
 
         Notes
         -----
@@ -57,15 +62,15 @@ class Operator:
 
         Parameters
         ----------
-        z : np.ndarray
-            initial state
-        t : np.ndarray
-            time at which to solve for `z`
+        z : numpy.ndarray
+            Initial state.
+        t : numpy.ndarray
+            Time at which to solve for `z`.
 
         Returns
         -------
-        z : np.ndarray
-            solution of `z` for each `t`
+        z : numpy.ndarray
+            Solution of `z` for each `t`.
         """
         raise NotImplementedError
 
@@ -96,19 +101,21 @@ class Operator:
 
         Parameters
         ----------
-        z : np.ndarray
-            initial state
-        t : np.ndarray
-            time at which to solve for `z`
+        z : numpy.ndarray
+            Initial state.
+        t : numpy.ndarray
+            Time at which to solve for `z`.
         callback : callable or None
-            function for each evaluation of the RHS
-        kwargs : dict
-            keyword arguments passed to `scipy.integrate.ode.solve_ivp`
+            Function for each evaluation of the RHS.
+        method : str
+            Integration method to use. See `scipy.integrate.ode.solve_ivp` for details.
+        **kwargs : dict
+            Keyword arguments passed to `scipy.integrate.ode.solve_ivp`.
 
         Returns
         -------
-        z : np.ndarray
-            solution of `z` for each `t`
+        z : numpy.ndarray
+            Solution of `z` for each `t`.
         """
         # Validate the input tensor
         z = self._assert_valid_shape(z)
@@ -133,15 +140,15 @@ class Operator:
 
         Parameters
         ----------
-        z : np.ndarray
-            initial state
-        t : np.ndarray
-            time at which to solve for `z`
+        z : numpy.ndarray
+            Initial state.
+        t : numpy.ndarray
+            Time at which to solve for `z`.
 
         Returns
         -------
-        z : np.ndarray
-            solution of `z` for each `t`
+        z : numpy.ndarray
+            Solution of `z` for each `t`.
 
         Notes
         -----
@@ -170,17 +177,19 @@ class Operator:
 
         Parameters
         ----------
-        z : np.ndarray
-            initial state
-        t : np.ndarray
-            time at which to solve for `z`
+        z : numpy.ndarray
+            Initial state.
+        t : numpy.ndarray
+            Time at which to solve for `z`.
         method : str
-            method used for simulation (one of 'analytic', 'numeric' or 'naive')
+            Method used for simulation (one of 'analytic', 'numeric' or 'naive').
+        **kwargs : dict
+            Keyword arguments passed to the selected integration `method`.
 
         Returns
         -------
-        z : np.ndarray
-            solution of `z` for each `t`
+        z : numpy.ndarray
+            Solution of `z` for each `t`.
         """
         self._assert_valid_shape(z)
         if method == 'analytic':

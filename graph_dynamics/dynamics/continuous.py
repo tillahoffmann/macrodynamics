@@ -11,7 +11,10 @@ class ContinuousOperator(Operator):
 
     The operator evaluates the gradient
 
-    \frac{\partial z(x, t)}{\partial t} = F(x) z(x) + G(x) \int dy \, H(x - y) L(y) z(y, t) + u(x),
+    .. math::
+
+        \frac{\partial z(x, t)}{\partial t} = F(x) z(x) + G(x) \int dy \, H(x - y) L(y) z(y, t)
+        + u(x),
 
     where all tensors `F` through `L` have shape `(k, k, *n)`, `k` is the number of states at each
     spatial point, and `n` is the shape of the space.
@@ -26,20 +29,20 @@ class ContinuousOperator(Operator):
 
     Parameters
     ----------
-    weight : np.ndarray
-        pointwise multiplicative weight `F(x)` for the state `z(x, t)` with shape `(k, k, *n)`
-    kernel : np.ndarray
-        homogeneous interaction kernel `H(x - y)` with shape `(k, k, *n)`
-    kernel_weight_x : np.ndarray
-        pointwise multiplicative weight `G(x)` applied to the convolution with shape `(k, k, *n)`
-    kernel_weight_y : np.ndarray
-        pointwise multiplicative weight `L(y)` applied to the argument of the convolution `z(y, t)`
-         with shape `(k, k, *n)` for periodic boundary conditions or `>= (k, k, *2 * (n - 1))` for
-         aperiodic boundary conditions
-    dx : np.ndarray or float
-        spacing between sample points
-    control : np.ndarray
-        static control field to apply to the dynamics
+    weight : numpy.ndarray
+        Pointwise multiplicative weight `F(x)` for the state `z(x, t)` with shape `(k, k, *n)`.
+    kernel : numpy.ndarray
+        Homogeneous interaction kernel `H(x - y)` with shape `(k, k, *n)`.
+    kernel_weight_x : numpy.ndarray
+        Pointwise multiplicative weight `G(x)` applied to the convolution with shape `(k, k, *n)`.
+    kernel_weight_y : numpy.ndarray
+        Pointwise multiplicative weight `L(y)` applied to the argument of the convolution `z(y, t)`
+        with shape `(k, k, *n)` for periodic boundary conditions or `>= (k, k, *2 * (n - 1))` for
+        aperiodic boundary conditions.
+    dx : numpy.ndarray or float
+        Spacing between sample points.
+    control : numpy.ndarray
+        Static control field to apply to the dynamics.
     """
     def __init__(self, weight, kernel, kernel_weight_x, kernel_weight_y, dx, control=None):
         self.weight = np.asarray(weight)
@@ -87,6 +90,31 @@ class ContinuousOperator(Operator):
 
     @classmethod
     def from_matrix(cls, weight, kernel, kernel_weight_x, kernel_weight_y, dx, **kwargs):
+        """
+        Create a differential operatof for scalar dynamics.
+
+        Parameters
+        ----------
+        weight : numpy.ndarray
+            Pointwise multiplicative weight `F(x)` for the state `z(x, t)` with shape `(k, k, *n)`.
+        kernel : numpy.ndarray
+            Homogeneous interaction kernel `H(x - y)` with shape `(k, k, *n)`.
+        kernel_weight_x : numpy.ndarray
+            Pointwise multiplicative weight `G(x)` applied to the convolution with shape `(k, k, *n)`.
+        kernel_weight_y : numpy.ndarray
+            Pointwise multiplicative weight `L(y)` applied to the argument of the convolution `z(y, t)`
+            with shape `(k, k, *n)` for periodic boundary conditions or `>= (k, k, *2 * (n - 1))` for
+            aperiodic boundary conditions.
+        dx : numpy.ndarray or float
+            Spacing between sample points.
+        **kwargs : dict
+            Keyword arguments passed to the constructor.
+
+        Returns
+        -------
+        operator : ContinuousOperator
+            Differential operator encoding scalar dynamics.
+        """
         args = [add_leading_dims(x, 2) for x in [weight, kernel, kernel_weight_x, kernel_weight_y]]
         return cls(*args, dx, **kwargs)
 
@@ -99,23 +127,35 @@ class ContinuousOperator(Operator):
 
     @lazy_property
     def dV(self):
-        """float : differential volume element"""
+        """float : Differential volume element."""
         return np.prod(self.dx)
 
     @lazy_property
     def ndim(self):
-        """int : spatial dimensionality of the kernel"""
+        """int : Spatial dimensionality of the kernel."""
         # Take of two for the leading state dimension
         return self.kernel.ndim - 2
 
     @lazy_property
     def fft_kernel(self):
-        """np.ndarray : Fourier transform of the kernel"""
+        """numpy.ndarray : Fourier transform of the kernel."""
         return self._evaluate_fft(self.kernel, True)
 
     def _evaluate_fft(self, x, forward):
         """
         Evaluate the FFT of `x` along the trailing dimensions depending on `forward`.
+
+        Parameters
+        ----------
+        x : numpy.ndarray
+            Array for which to evaluate the Fourier transform.
+        forward : bool
+            Whether to transform the forwards transform.
+
+        Returns
+        -------
+        transformed : numpy.ndarray
+            Transform of `x`.
         """
         shape = self.kernel.shape[2:]
         axes = self._evaluate_spatial_axes(x)
@@ -150,7 +190,7 @@ class ContinuousOperator(Operator):
     @lazy_property
     def _fft_operator(self):
         """
-        np.ndarray : Operator responsible for the evolution of the fourier-transformed fields.
+        numpy.ndarray : Operator responsible for the evolution of the fourier-transformed fields.
         """
         # Check all the weight functions are homogeneous
         if not self.has_analytic_solution:
@@ -236,27 +276,30 @@ class ContinuousOperator(Operator):
         r"""
         Evaluate the optimal control field that minimises the loss function
 
-        \int dx \, (z(x, t) - r(x))^T \alpha (z(x, t) - r(x)) + t \int dx \, u^T(x) \beta u(x),
+        .. math::
 
-        where `r(x)` is the setpoint, `t` is the time horizon, `\alpha` is the weight placed on
-        achieving the setpoint, and `\beta` is the cost of applying the control.
+            \ell\{u(x)\} = \int dx \, (z(x, t) - r(x))^T \alpha (z(x, t) - r(x))
+            + t \int dx \, u^T(x) \beta u(x),
+
+        where `r(x)` is the setpoint, `t` is the time horizon, :math:`\alpha` is the weight placed
+        on achieving the setpoint, and :math:`\beta` is the cost of applying the control.
 
         Parameters
         ----------
-        z : np.ndarray
+        z : numpy.ndarray
             Initial state with shape `(k, *n)`.
-        setpoint : np.ndarray
+        setpoint : numpy.ndarray
             Desired setpoint with shape `(k, *n)`.
-        residual_weight : np.ndarray
+        residual_weight : numpy.ndarray
             Weight associated with the cost due to departures from the setpoint with shape `(k, k)`.
-        control_weight : np.ndarray
+        control_weight : numpy.ndarray
             Weight associated with the cost due to applying the control with shape `(k, k)`.
         t : float
             Time horizon for achieving the setpoint.
 
         Returns
         -------
-        control : np.ndarray
+        control : numpy.ndarray
             Optimal control field that minimises the loss function.
         """
         # Validate the inputs

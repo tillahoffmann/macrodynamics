@@ -9,19 +9,20 @@ def evaluate_distance(x, y, cov=1.0, domain=1.0):
 
     Parameters
     ----------
-    x : np.ndarray
-        coordinates of shape `(..., k)`
-    y : np.ndarray
-        coordinates of shape `(..., k)`
-    cov : np.ndarray
-        covariance matrix (can be a scalar, length-`k` vector or `(k, k)` matrix)
+    x : numpy.ndarray
+        Coordinates of shape `(..., k)`..
+    y : numpy.ndarray
+        Coordinates of shape `(..., k)`..
+    cov : numpy.ndarray
+        Covariance matrix (can be a scalar, length-`k` vector or `(k, k)` matrix).
     domain : array_like
-        domain for periodic boundary conditions. If `None`, non-periodic boundary conditions are used.
+        Domain for periodic boundary conditions. If `None`, non-periodic boundary conditions are
+        used.
 
     Returns
     -------
-    distance : np.ndarray
-        non-negative distance array of shape `(...)`
+    distance : numpy.ndarray
+        Non-negative distance array of shape `(...)`.
     """
     # Evaluate the difference
     delta = x - y
@@ -50,21 +51,22 @@ def evaluate_gaussian_kernel(x, y, norm, cov, domain=1.0):
 
     Parameters
     ----------
-    x : np.ndarray
-        coordinates of shape `(..., k)`
-    y : np.ndarray
-        coordinates of shape `(..., k)`
+    x : numpy.ndarray
+        Coordinates of shape `(..., k)`..
+    y : numpy.ndarray
+        Coordinates of shape `(..., k)`..
     norm : float
-        normalisation of the kernel
-    cov : np.ndarray
-        covariance matrix (can be a scalar, length-`k` vector or `(k, k)` matrix)
+        Normalisation of the kernel..
+    cov : numpy.ndarray
+        Covariance matrix (can be a scalar, length-`k` vector or `(k, k)` matrix).
     domain : array_like
-        domain for periodic boundary conditions. If `None`, non-periodic boundary conditions are used.
+        Domain for periodic boundary conditions. If `None`, non-periodic boundary conditions are
+        used.
 
     Returns
     -------
-    kernel : np.ndarray
-        non-negative kernel array of shape `(...)`
+    kernel : numpy.ndarray
+        Non-negative kernel array of shape `(...)`.
     """
     distance = evaluate_distance(x, y, cov, domain)
     return norm * np.exp(-0.5 * distance * distance)
@@ -76,21 +78,22 @@ def evaluate_tophat_kernel(x, y, norm, cov, domain=1.0):
 
     Parameters
     ----------
-    x : np.ndarray
-        coordinates of shape `(..., k)`
-    y : np.ndarray
-        coordinates of shape `(..., k)`
+    x : numpy.ndarray
+        Coordinates of shape `(..., k)`..
+    y : numpy.ndarray
+        Coordinates of shape `(..., k)`..
     norm : float
-        normalisation of the kernel
-    cov : np.ndarray
-        covariance matrix (can be a scalar, length-`k` vector or `(k, k)` matrix)
+        Normalisation of the kernel..
+    cov : numpy.ndarray
+        Covariance matrix (can be a scalar, length-`k` vector or `(k, k)` matrix).
     domain : array_like
-        domain for periodic boundary conditions. If `None`, non-periodic boundary conditions are used.
+        Domain for periodic boundary conditions. If `None`, non-periodic boundary conditions are
+        used.
 
     Returns
     -------
-    kernel : np.ndarray
-        non-negative kernel array of shape `(...)`
+    kernel : numpy.ndarray
+        Non-negative kernel array of shape `(...)`.
     """
     distance = evaluate_distance(x, y, cov, domain)
     return np.where(distance < 1, norm, 0)
@@ -102,21 +105,22 @@ def evaluate_laplace_kernel(x, y, norm, cov, domain=1.0):
 
     Parameters
     ----------
-    x : np.ndarray
-        coordinates of shape `(..., k)`
-    y : np.ndarray
-        coordinates of shape `(..., k)`
+    x : numpy.ndarray
+        Coordinates of shape `(..., k)`.
+    y : numpy.ndarray
+        Coordinates of shape `(..., k)`.
     norm : float
-        normalisation of the kernel
-    cov : np.ndarray
-        covariance matrix (can be a scalar, length-`k` vector or `(k, k)` matrix)
+        Normalisation of the kernel.
+    cov : numpy.ndarray
+        Covariance matrix (can be a scalar, length-`k` vector or `(k, k)` matrix).
     domain : array_like
-        domain for periodic boundary conditions. If `None`, non-periodic boundary conditions are used.
+        Domain for periodic boundary conditions. If `None`, non-periodic boundary conditions are
+        used.
 
     Returns
     -------
-    kernel : np.ndarray
-        non-negative kernel array of shape `(...)`
+    kernel : numpy.ndarray
+        Non-negative kernel array of shape `(...)`.
     """
     distance = evaluate_distance(x, y, cov, domain)
     return norm * np.exp(-distance)
@@ -128,21 +132,22 @@ def evaluate_uniform_kernel(x, y, norm, cov=None, domain=1.0):
 
     Parameters
     ----------
-    x : np.ndarray
-        coordinates of shape `(..., k)`
-    y : np.ndarray
-        coordinates of shape `(..., k)`
+    x : numpy.ndarray
+        Coordinates of shape `(..., k)`.
+    y : numpy.ndarray
+        Coordinates of shape `(..., k)`.
     norm : float
-        normalisation of the kernel
-    cov : np.ndarray
-        covariance matrix (can be a scalar, length-`k` vector or `(k, k)` matrix)
+        Normalisation of the kernel.
+    cov : numpy.ndarray
+        Covariance matrix (can be a scalar, length-`k` vector or `(k, k)` matrix).
     domain : array_like
-        domain for periodic boundary conditions. If `None`, non-periodic boundary conditions are used.
+        Domain for periodic boundary conditions. If `None`, non-periodic boundary conditions are
+        used.
 
     Returns
     -------
-    kernel : np.ndarray
-        non-negative kernel array of shape `(...)`
+    kernel : numpy.ndarray
+        Non-negative kernel array of shape `(...)`.
     """
     return norm * np.ones(np.broadcast(x, y).shape[:-1])
 
@@ -153,19 +158,19 @@ def sample_adjacency(coordinates, kernel, condensed=False, distribution='bernoul
 
     Parameters
     ----------
-    coordinates : np.ndarray
-        coordinates of shape `(n, k)`
+    coordinates : numpy.ndarray
+        Coordinates of shape `(n, k)`.
     kernel : callable
-        kernel function
+        Kernel function.
     condensed : bool
-        whether to return a condensed adjacency matrix
+        Whether to return a condensed adjacency matrix.
     distribution : str
-        distribution to draw adjacency samples from
+        Distribution to draw adjacency samples from.
 
     Returns
     -------
-    adjacency : np.ndarray
-        sampled adjacency matrix
+    adjacency : numpy.ndarray
+        Sampled adjacency matrix.
     """
     i, j = np.triu_indices(coordinates.shape[0], 1)
     kernel = kernel(coordinates[i], coordinates[j])
@@ -187,16 +192,16 @@ def evaluate_expected_degree(connectivity, density, dx):
 
     Parameters
     ----------
-    connectivity : np.ndarray
-        evaluated connectivity kernel
-    density : np.ndarray or float
-        density of nodes (use a scalar for uniform densities)
-    dx : np.ndarray or float
-        spacing of sample points
+    connectivity : numpy.ndarray
+        Evaluated connectivity kernel.
+    density : numpy.ndarray or float
+        Density of nodes (use a scalar for uniform densities).
+    dx : numpy.ndarray or float
+        Spacing of sample points.
 
     Returns
     -------
-    expected_degree : np.ndarray or float
-        expected degree of nodes (returns a scalar if `density` is a scalar)
+    expected_degree : numpy.ndarray or float
+        Expected degree of nodes (returns a scalar if `density` is a scalar).
     """
     return convolve(density, connectivity, dx)

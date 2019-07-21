@@ -33,6 +33,8 @@ if USE_CYTHON:
 tests_require = [
     "pytest",
     "pytest-cov",
+    "sphinx",
+    "numpydoc",
 ]
 
 setup(

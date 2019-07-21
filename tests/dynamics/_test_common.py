@@ -14,10 +14,17 @@ def _test_integration(operator, z0=None, time=1, num=200):
     else:
         z0 = np.reshape(z0, operator.shape)
 
+
+    def callback(*args):
+        callback.called = True
+
+
     # Run the integration
-    z_numeric = operator.integrate_numeric(z0, time)
+    z_numeric = operator.integrate_numeric(z0, time, callback=callback)
     z_naive = operator.integrate_naive(z0, np.linspace(0, time, num) if np.isscalar(time) else time)[-1]
     gd.assert_correlated(z_naive, z_numeric)
+
+    assert getattr(callback, 'called', True), "callback not called"
 
     if not operator.has_analytic_solution:
         return z0, z_numeric, None

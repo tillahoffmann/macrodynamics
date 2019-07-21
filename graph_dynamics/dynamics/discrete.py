@@ -11,13 +11,13 @@ class DiscreteOperator(Operator):
 
     Parameters
     ----------
-    matrix : np.ndarray
-        flattened evolution tensor with shape `(k * n, k * n)` for vector dynamics, where `n` is
-        the number of nodes and `k` is the number of state variables
-    shape : np.ndarray
-        shape `(k, n)` of the state vector
-    control : np.ndarray
-        static control vector to apply to the dynamics
+    matrix : numpy.ndarray or scipy.sparse.spmatrix
+        Flattened evolution tensor with shape `(k * n, k * n)` for vector dynamics, where `n` is
+        the number of nodes and `k` is the number of state variables.
+    shape : numpy.ndarray
+        Shape `(k, n)` of the state vector.
+    control : numpy.ndarray
+        Static control vector to apply to the dynamics.
 
     Notes
     -----
@@ -42,9 +42,14 @@ class DiscreteOperator(Operator):
         Parameters
         ----------
         tensor : list
-            list of lists of matrices constituting an evolution tensor with shape `(k, k, n, n)` for
+            List of lists of matrices constituting an evolution tensor with shape `(k, k, n, n)` for
             vector dynamics, where `n` is the number of nodes and `k` is the number of state
-            variables
+            variables.
+
+        Returns
+        -------
+        operator : DiscreteOperator
+            Operator encoding the dynamics.
         """
         # Ensure the tensor appears as a list of lists with the right shapes
         k = len(tensor)
@@ -77,9 +82,14 @@ class DiscreteOperator(Operator):
 
         Parameters
         ----------
-        matrix : np.ndarray
-            evolution matrix with shape `(n, n)` for scalar dynamics, where `n` is the number of
-            nodes
+        matrix : numpy.ndarray
+            Evolution matrix with shape `(n, n)` for scalar dynamics, where `n` is the number of
+            nodes.
+
+        Returns
+        -------
+        operator : DiscreteOperator
+            Operator encoding the dynamics.
         """
         return cls(matrix, (1, ) + matrix.shape[:1])
 
@@ -101,17 +111,17 @@ class DiscreteOperator(Operator):
 
     @property
     def evals(self):
-        """np.ndarray : eigenvalues of the evolution matrix"""
+        """numpy.ndarray : eigenvalues of the evolution matrix"""
         return self.eig[0]
 
     @property
     def evecs(self):
-        """np.ndarray : eigenvectors of the evolution matrix"""
+        """numpy.ndarray : eigenvectors of the evolution matrix"""
         return self.eig[1]
 
     @lazy_property
     def ievecs(self):
-        """np.ndarray : inverse of the eigenvector matrix of the evolution matrix"""
+        """numpy.ndarray : inverse of the eigenvector matrix of the evolution matrix"""
         return np.linalg.inv(self.evecs)
 
     def integrate_analytic(self, z, t):

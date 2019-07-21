@@ -170,3 +170,8 @@ def test_label_axes():
     fig, axes = plt.subplots(2, 2)
     assert len(gd.label_axes(axes)) == 4
     assert len(gd.label_axes(*axes)) == 4
+
+
+def test_first_element():
+    x = np.random.normal(0, 1, (10, 10))
+    np.testing.assert_array_equal(x[:, 0], gd.first_element(x, 1, True))

@@ -4,25 +4,27 @@ from scipy import sparse
 from ..structure import evaluate_expected_degree
 from .discrete import DiscreteOperator
 from .continuous import ContinuousOperator
-from ..util import ignore_scipy_issue_9093
+from ..util import _ignore_scipy_issue_9093
 
 
-@ignore_scipy_issue_9093
+@_ignore_scipy_issue_9093
 def evaluate_discrete_operator(adjacency, angular_frequency=1, **kwargs):
     """
     Evaluate the differential operator for coupled oscillators.
 
     Parameters
     ----------
-    adjacency : np.ndarray
-        adjacency matrix
-    natural_frequency : np.ndarray
-        angular frequency of each individual oscillator
+    adjacency : numpy.ndarray or scipy.sparse.spmatrix
+        Adjacency matrix.
+    angular_frequency : numpy.ndarray
+        Angular frequency of each individual oscillator.
+    **kwargs : dict
+        Keyword arguments passed to `DiscreteOperator.from_tensor`.
 
     Returns
     -------
     operator : DiscreteOperator
-        differential operator for coupled oscillators
+        Differential operator for coupled oscillators.
     """
     n = adjacency.shape[0]
     in_degree = adjacency.sum(axis=1)
@@ -46,19 +48,21 @@ def evaluate_continuous_operator(connectivity, density, dx, angular_frequency=1,
 
     Parameters
     ----------
-    connectivity : np.ndarray
-        evaluated connectivity kernel
-    density : np.ndarray or float
-        density of nodes (use a scalar for uniform densities)
-    dx : np.ndarray or float
-        spacing of sample points
+    connectivity : numpy.ndarray
+        Evaluated connectivity kernel.
+    density : numpy.ndarray or float
+        Density of nodes (use a scalar for uniform densities).
+    dx : numpy.ndarray or float
+        Spacing of sample points.
+    angular_frequency : numpy.ndarray
+        Angular frequency of each individual oscillator.
     **kwargs : dict
-        additional keyword arguments passed to `ContinuousOperator`
+        Keyword arguments passed to `ContinuousOperator`.
 
     Returns
     -------
     operator : ContinuousOperator
-        differential operator for coupled oscillators
+        Differential operator for coupled oscillators.
     """
     weight = [
         (
