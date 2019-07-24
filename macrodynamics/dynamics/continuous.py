@@ -41,10 +41,8 @@ class ContinuousOperator(Operator):
         aperiodic boundary conditions.
     dx : numpy.ndarray or float
         Spacing between sample points.
-    control : numpy.ndarray
-        Static control field to apply to the dynamics.
     """
-    def __init__(self, weight, kernel, kernel_weight_x, kernel_weight_y, dx, control=None):
+    def __init__(self, weight, kernel, kernel_weight_x, kernel_weight_y, dx):
         self.weight = np.asarray(weight)
         self.kernel = np.asarray(kernel)
         self.kernel_weight_x = np.asarray(kernel_weight_x)
@@ -85,8 +83,6 @@ class ContinuousOperator(Operator):
                 "`2 * (weight.shape[2:] - 1 = %s)` for aperiodic boundary conditions but got `%s`" %
                 (spatial_weight_shape, 2 * spatial_weight_shape - 1, spatial_kernel_shape)
             )
-
-        super(ContinuousOperator, self).__init__(control)
 
     @classmethod
     def from_matrix(cls, weight, kernel, kernel_weight_x, kernel_weight_y, dx, **kwargs):
@@ -219,8 +215,9 @@ class ContinuousOperator(Operator):
         ievecs = np.linalg.inv(evecs)
         return evals, evecs, ievecs
 
-    def integrate_analytic(self, z, t):
+    def integrate_analytic(self, z, t, control=None):
         z = self._assert_valid_shape(z)
+        control = self._assert_valid_shape(control)
         evals, evecs, ievecs = self._fft_eig
         # Take the fourier transform of the initial state (state_dim, *fourier_dims)
         ft_z = self._evaluate_fft(z, True)
@@ -231,9 +228,9 @@ class ContinuousOperator(Operator):
         t_vector = np.reshape(t, (-1, *np.ones(ft_z.ndim, int)))
         ft_z = np.exp(evals * t_vector) * ft_z
         # Apply the control field
-        if self.control is not None:
+        if control is not None:
             # Move to the Fourier space (state_dim, *fourier_dims)
-            ft_control = self._evaluate_fft(self.control, True)
+            ft_control = self._evaluate_fft(control, True)
             # Move to the eigenspace of the operator (*fourier_dims, state_dim)
             ft_control = np.einsum('...ij,j...->...i', ievecs, ft_control)
             # Evolve in the eigenspace (time_dim, *fourier_dims, state_dim)
@@ -252,8 +249,9 @@ class ContinuousOperator(Operator):
         """
         return np.einsum('ij...,j...->i...', a, b)
 
-    def evaluate_gradient(self, z, t=None):
+    def evaluate_gradient(self, z, t=None, control=None):
         z = self._assert_valid_shape(z)
+        control = self._assert_valid_shape(control)
         # Evaluate the kernel weighted field
         w = self._evaluate_dot(self.kernel_weight_y, z)
         # Compute the FFT of the kernel-weighted field
@@ -268,8 +266,8 @@ class ContinuousOperator(Operator):
         # Add the elementwise multiplicative contribution
         grad += self._evaluate_dot(self.weight, z)
         # Add the control field if present
-        if self.control is not None:
-            grad += self.control
+        if control is not None:
+            grad += control
         return grad
 
     def evaluate_control(self, z, setpoint, residual_weight, control_weight, t):
