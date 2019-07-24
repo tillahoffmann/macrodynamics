@@ -24,7 +24,8 @@ def evaluate_discrete_operator(adjacency):
     """
     n = adjacency.shape[0]
     in_degree = adjacency.sum(axis=1)
-    # Replace zeros by ones because the corresponding row will only contain zeros anyway and we don't want nans
+    # Replace zeros by ones because the corresponding row will only contain zeros anyway and we
+    # don't want nans
     in_degree = np.where(in_degree > 0, in_degree, 1).astype(float)
     if sparse.issparse(adjacency):
         matrix = adjacency / in_degree - sparse.spdiags(np.ones(n), 0, n, n)

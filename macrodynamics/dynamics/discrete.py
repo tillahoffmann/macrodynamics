@@ -16,8 +16,6 @@ class DiscreteOperator(Operator):
         the number of nodes and `k` is the number of state variables.
     shape : numpy.ndarray
         Shape `(k, n)` of the state vector.
-    control : numpy.ndarray
-        Static control vector to apply to the dynamics.
 
     Notes
     -----
@@ -25,14 +23,13 @@ class DiscreteOperator(Operator):
     particularly efficient for the dot product used in the calculation of the gradient. See
     https://docs.scipy.org/doc/scipy/reference/sparse.html#usage-information for details.
     """
-    def __init__(self, matrix, shape, control=None):
+    def __init__(self, matrix, shape):
         self.matrix = matrix
         self._shape = shape
         assert len(self.shape) == 2, "shape must have length two but got %d" % len(self.shape)
         matrix_rank = np.prod(self.shape)
         assert self.matrix.shape == (matrix_rank, matrix_rank), \
             "expected matrix shape %s but got %s" % ((matrix_rank, matrix_rank), self.matrix.shape)
-        super(DiscreteOperator, self).__init__(control)
 
     @classmethod
     def from_tensor(cls, tensor):
@@ -124,16 +121,17 @@ class DiscreteOperator(Operator):
         """numpy.ndarray : inverse of the eigenvector matrix of the evolution matrix"""
         return np.linalg.inv(self.evecs)
 
-    def integrate_analytic(self, z, t):
+    def integrate_analytic(self, z, t, control=None):
         z = self._assert_valid_shape(z)
+        control = self._assert_valid_shape(control)
         # Project into the diagonal basis
         z = np.dot(self.ievecs, z.ravel())
         # Evolve the state (which has shape (number of time steps, number of state variables))
         t_vector = np.reshape(t, (-1, 1))
         z = np.exp(self.evals * t_vector) * z
-        if self.control is not None:
+        if control is not None:
             # Project into the diagonal basis
-            control = np.dot(self.ievecs, self.control.ravel())
+            control = np.dot(self.ievecs, control.ravel())
             # Evolve the state
             z += control * nexpm1(self.evals, t_vector)
         # Project back into the real space
@@ -141,12 +139,13 @@ class DiscreteOperator(Operator):
         z = np.reshape(z, (-1, *self.shape))
         return z[-1] if np.isscalar(t) else z
 
-    def evaluate_gradient(self, z, t=None):
+    def evaluate_gradient(self, z, t=None, control=None):
         z = self._assert_valid_shape(z)
+        control = self._assert_valid_shape(control)
         grad = self.matrix.dot(z.ravel())
         grad = np.reshape(grad, self.shape)
-        if self.control is not None:
-            grad += self.control
+        if control is not None:
+            grad += control
         return grad
 
     @property

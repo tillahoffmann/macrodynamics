@@ -92,8 +92,8 @@ def test_discrete_diffusion_integration(discrete_diffusion_operator):
 
 
 def test_discrete_diffusion_integration_with_control(discrete_diffusion_operator):
-    discrete_diffusion_operator.control = np.random.normal(0, 1, discrete_diffusion_operator.shape)
-    _test_integration(discrete_diffusion_operator, time=2)
+    control = np.random.normal(0, 1, discrete_diffusion_operator.shape)
+    _test_integration(discrete_diffusion_operator, time=2, control=control)
 
 
 def test_discrete_diffusion_integration_shape(discrete_diffusion_operator, integration_method, time):

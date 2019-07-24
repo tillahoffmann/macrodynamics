@@ -8,32 +8,13 @@ from ..util import lazy_property
 class Operator:
     """
     Base class for differential operators.
-
-    Parameters
-    ----------
-    control : numpy.ndarray
-        Static control to apply to the dynamics.
     """
-    def __init__(self, control=None):
-        self._control = None
-        self.control = control
-
-    @property
-    def control(self):
-        return self._control
-
-    @control.setter
-    def control(self, control):
-        if control is not None:
-            control = self._assert_valid_shape(control)
-        self._control = control
-
     @lazy_property
     def shape(self):
         """tuple : Shape of the state array."""
         raise NotImplementedError
 
-    def evaluate_gradient(self, z, t=None):
+    def evaluate_gradient(self, z, t=None, control=None):
         """
         Evaluate the time derivative of `z`.
 
@@ -43,6 +24,8 @@ class Operator:
             State for which to evaluate the gradient.
         t : float
             Time at which to evaluate the gradient.
+        control : numpy.ndarray
+            Static control to apply to the dynamics.
 
         Returns
         -------
@@ -56,7 +39,7 @@ class Operator:
         """
         raise NotImplementedError
 
-    def integrate_analytic(self, z, t):
+    def integrate_analytic(self, z, t, control=None):
         """
         Solve for `z` as a function of `t` analytically.
 
@@ -66,6 +49,8 @@ class Operator:
             Initial state.
         t : numpy.ndarray
             Time at which to solve for `z`.
+        control : numpy.ndarray
+            Static control to apply to the dynamics.
 
         Returns
         -------
@@ -74,13 +59,13 @@ class Operator:
         """
         raise NotImplementedError
 
-    def _evaluate_flat_gradient(self, t, z, callback=None):
+    def _evaluate_flat_gradient(self, t, z, control, callback=None):
         """
         Helper function to reshape `z` to the same shape as the state vector associated with this
         operator if necessary, compute the time derivative, and flatten the gradient.
         """
         z = np.reshape(z, self.shape)
-        grad = self.evaluate_gradient(z, t)
+        grad = self.evaluate_gradient(z, t, control)
         if callback:
             callback(t, z, grad)
         return grad.ravel()
@@ -90,12 +75,14 @@ class Operator:
         Helper function to assert that `z` has the same shape as the state vector associated with
         this operator.
         """
+        if z is None:
+            return
         z = np.atleast_2d(z)
         assert z.shape == self.shape, "expected state shape `%s` (state dim, *spatial dims) but " \
             "got `%s`" % (self.shape, z.shape)
         return z
 
-    def integrate_numeric(self, z, t, callback=None, method='LSODA', **kwargs):
+    def integrate_numeric(self, z, t, control=None, callback=None, method='LSODA', **kwargs):
         """
         Solve for `z` as a function of `t` numerically.
 
@@ -105,6 +92,8 @@ class Operator:
             Initial state.
         t : numpy.ndarray
             Time at which to solve for `z`.
+        control : numpy.ndarray
+            Static control to apply to the dynamics.
         callback : callable or None
             Function for each evaluation of the RHS.
         method : str
@@ -123,7 +112,7 @@ class Operator:
 
         # Solve the initial value problem
         result = scipy.integrate.solve_ivp(
-            ft.partial(self._evaluate_flat_gradient, callback=callback),
+            ft.partial(self._evaluate_flat_gradient, callback=callback, control=control),
             (times[0], times[-1]),
             z.ravel(),
             t_eval=times,
@@ -134,7 +123,7 @@ class Operator:
         z = result.y.T.reshape((-1, * self.shape))
         return z[-1] if np.isscalar(t) else z
 
-    def integrate_naive(self, z, t):
+    def integrate_naive(self, z, t, control=None):
         """
         Solve for `z` as a function of `t` using naive finite difference integration.
 
@@ -144,6 +133,8 @@ class Operator:
             Initial state.
         t : numpy.ndarray
             Time at which to solve for `z`.
+        control : numpy.ndarray
+            Static control to apply to the dynamics.
 
         Returns
         -------
@@ -163,7 +154,7 @@ class Operator:
 
         time = t[0]
         for next_time in t[1:]:
-            grad = self.evaluate_gradient(z, time)
+            grad = self.evaluate_gradient(z, time, control)
             dt = next_time - time
             z = z + dt * grad
             zs.append(z.copy())
@@ -171,7 +162,7 @@ class Operator:
 
         return np.asarray(zs)
 
-    def integrate(self, z, t, method, **kwargs):
+    def integrate(self, z, t, method, control=None, **kwargs):
         """
         Solve for `z` as a function of `t`.
 
@@ -183,6 +174,8 @@ class Operator:
             Time at which to solve for `z`.
         method : str
             Method used for simulation (one of 'analytic', 'numeric' or 'naive').
+        control : numpy.ndarray
+            Static control to apply to the dynamics.
         **kwargs : dict
             Keyword arguments passed to the selected integration `method`.
 
@@ -193,15 +186,15 @@ class Operator:
         """
         self._assert_valid_shape(z)
         if method == 'analytic':
-            return self.integrate_analytic(z, t, **kwargs)
+            return self.integrate_analytic(z, t, control, **kwargs)
         elif method == 'numeric':
-            return self.integrate_numeric(z, t, **kwargs)
+            return self.integrate_numeric(z, t, control, **kwargs)
         elif method == 'naive':
-            return self.integrate_naive(z, t, **kwargs)
+            return self.integrate_naive(z, t, control, **kwargs)
         else:
             raise KeyError(method)
 
     @lazy_property
     def has_analytic_solution(self):
-        """bool : whether the differential operator has an analytic solution"""
+        """bool : Whether the differential operator has an analytic solution."""
         raise NotImplementedError

@@ -137,9 +137,9 @@ def test_continuous_diffusion_integration(continuous_diffusion_operator, density
 
 def test_continuous_diffusion_integration_with_control(continuous_diffusion_operator,
                                                        density, initial_conditions):
-    continuous_diffusion_operator.control = np.pi * np.ones_like(density)[None]
+    control = np.pi * np.ones_like(density)[None]
     _, z_numeric, _ = _test_integration(continuous_diffusion_operator, initial_conditions,
-                                        time=np.sqrt(2))
+                                        time=np.sqrt(2), control=control)
     # Ensure the diffusion substance is conserved
     np.testing.assert_allclose(
         np.mean((initial_conditions + np.pi * np.sqrt(2)) * density),
@@ -164,13 +164,13 @@ def test_continous_oscillation_operator_with_control(continuous_oscillation_oper
     center = np.random.uniform(0, 1, num_dims)
     ic = md.evaluate_gaussian_kernel(coordinate_tensor, center, 1, 0.05 ** 2)
     ic = [ic, np.zeros_like(ic)]
-    continuous_oscillation_operator.control = np.ones_like(ic)
-    _test_integration(continuous_oscillation_operator, ic)
+    _test_integration(continuous_oscillation_operator, ic, control=np.ones_like(ic))
 
 
 @pytest.mark.parametrize('control_weight', [0, 0.1])
 def test_continuous_oscillation_optimal_control(continuous_oscillation_operator, density,
-                                                coordinate_tensor, num_dims, periodic, control_weight):
+                                                coordinate_tensor, num_dims, periodic,
+                                                control_weight):
     if not continuous_oscillation_operator.has_analytic_solution:
         pytest.skip()
     # Define the inputs
@@ -184,8 +184,7 @@ def test_continuous_oscillation_optimal_control(continuous_oscillation_operator,
     # Evaluate the control field
     control = continuous_oscillation_operator.evaluate_control(ic, setpoint, np.eye(2),
                                                                control_weight * np.eye(2), t)
-    continuous_oscillation_operator.control = control
-    z_wc = continuous_oscillation_operator.integrate_analytic(ic, t)
+    z_wc = continuous_oscillation_operator.integrate_analytic(ic, t, control=control)
 
     # Check that the result with control is better than the one without
     corrcoef_nc = np.corrcoef(np.ravel(setpoint), z_nc.ravel())[0, 1]
