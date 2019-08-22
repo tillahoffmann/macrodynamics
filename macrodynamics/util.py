@@ -39,7 +39,7 @@ def smoothed_sum(points, data, values, precision):
         precision = np.eye(d) * precision
     elif np.ndim(precision) == 1:
         precision = np.diag(precision)
-    assert precision.shape == (d, d), "data have dimension %d but precision has shape %s" % \
+    assert np.shape(precision) == (d, d), "data have dimension %d but precision has shape %s" % \
         (d, precision.shape)
 
     # Evaluate the weight with shape (n, np.prod(spatial_shape)) and normalisation constant
