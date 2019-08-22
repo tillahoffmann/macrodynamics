@@ -6,8 +6,57 @@ from matplotlib import pyplot as plt
 from matplotlib import collections as mcollections
 import numpy as np
 from scipy.fftpack.helper import next_fast_len
-from scipy import sparse, special
-from ._util import smoothed_sum
+from scipy import sparse, special, spatial
+
+
+def smoothed_sum(points, data, values, precision):
+    """
+    Evaluate the smoothed sum of `values` located at `data` over `points`.
+
+    Parameters
+    ----------
+    points : np.ndarray
+        Points at which to evaluate the sum with shape `(*spatial_dims, d)`.
+    data : np.ndarray
+        Sample coordinates with shape `(n, d)`.
+    values : np.ndarray
+        Values associated with the data of shape `(*state_dims, n)`.
+    precision : np.ndarray
+        Precision (matrix) for the Gaussian kernel.
+
+    Returns
+    -------
+    sum : numpy.ndarray
+        Sum evaluated at the desired points with shape `(*state_dims, *spatial_dims)`.
+    """
+    points = np.asarray(points)
+    data = np.asarray(data)
+    values = np.asarray(values)
+    precision = np.asarray(precision)
+
+    n, d = np.shape(data)
+    *spatial_shape, d_ = np.shape(points)
+    *state_shape, n_ = np.shape(values)
+    assert d == d_, "data have dimension %d but points have dimension %d" % (d, d_)
+    assert n == n_, "data have %d items but values have %d items" % (n, n_)
+
+    if np.ndim(precision) == 0:
+        precision = np.eye(d) * precision
+    elif np.ndim(precision) == 1:
+        precision = np.diag(precision)
+    assert np.shape(precision) == (d, d), "data have dimension %d but precision has shape %s" % \
+        (d, precision.shape)
+
+    # Evaluate the weight with shape (n, np.prod(spatial_shape)) and normalisation constant
+    weight = np.exp(-np.square(spatial.distance.cdist(data, np.reshape(points, (-1, d)),
+                                                      metric='mahalanobis', VI=precision / 2)))
+    norm = np.sqrt(np.linalg.det(precision / (2 * np.pi)))
+
+    # Evaluate the weighted sum of the state variables with shape
+    # (*state_shape, np.prod(spatial_shape))
+    result = np.dot(values, weight)
+    # Reshape and normalise
+    return result.reshape((*state_shape, *spatial_shape)) * norm
 
 
 def smoothed_statistic(points, data, values, precision, statistic='mean'):
@@ -17,11 +66,11 @@ def smoothed_statistic(points, data, values, precision, statistic='mean'):
     Parameters
     ----------
     points : numpy.ndarray
-        Points at which to evaluate the statistic with shape `(..., d)`.
+        Points at which to evaluate the statistic with shape `(*spatial_dims, d)`.
     data : numpy.ndarray
         Sample coordinates with shape `(n, d)`.
     values : numpy.ndarray
-        Values associated with the data of shape `n`.
+        Values associated with the data of shape `(*state_dims, n)`.
     precision : numpy.ndarray
         Precision (matrix) for the Gaussian kernel.
     statistic : numpy.ndarray
@@ -30,7 +79,7 @@ def smoothed_statistic(points, data, values, precision, statistic='mean'):
     Returns
     -------
     statistic : numpy.ndarray
-        Statistic evaluated at the desired points.
+        Statistic evaluated at the desired points with shape `(*state_dims, *spatial_dims)`.
     """
     if statistic == 'count':
         return smoothed_sum(points, data, np.ones(data.shape[0]), precision)
