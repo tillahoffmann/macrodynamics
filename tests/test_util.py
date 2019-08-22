@@ -7,8 +7,13 @@ from matplotlib import pyplot as plt
 from scipy import sparse
 
 
-@pytest.mark.parametrize('statistic', ['count', 'sum', 'mean', 'var'])
-def test_smoothed_statistic(statistic):
+@pytest.mark.parametrize('statistic, precision', [
+    ('count', 100),
+    ('sum', [100, 50]),
+    ('mean', [[10, 2], [2, 3]]),
+    ('var', 100)
+])
+def test_smoothed_statistic(statistic, precision):
     # Generate data
     data = np.random.normal(0, 1, (1000, 2))
     values = np.random.normal(0, 1, 1000)
@@ -16,7 +21,7 @@ def test_smoothed_statistic(statistic):
     xx, yy = np.meshgrid(x, x)
     points = np.transpose((xx, yy))
     # Evaluate the statistic and check its shape
-    actual = md.smoothed_statistic(points, data, values, 100, statistic)
+    actual = md.smoothed_statistic(points, data, values, precision, statistic)
     assert actual.shape == xx.shape, "unexpected shape"
     if statistic == 'count':
         np.testing.assert_allclose(np.sum(actual) * dx ** 2, len(data), 0.01)
