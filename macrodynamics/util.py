@@ -29,6 +29,11 @@ def smoothed_sum(points, data, values, precision):
     sum : numpy.ndarray
         Sum evaluated at the desired points with shape `(*state_dims, *spatial_dims)`.
     """
+    points = np.asarray(points)
+    data = np.asarray(data)
+    values = np.asarray(values)
+    precision = np.asarray(precision)
+
     n, d = np.shape(data)
     *spatial_shape, d_ = np.shape(points)
     *state_shape, n_ = np.shape(values)
