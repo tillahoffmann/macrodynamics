@@ -20,10 +20,7 @@ tests :
 		--cov-fail-under=100
 
 clean/docs :
-	rm -rf docs/build
+	rm -rf docs/_build
 
 docs :
-	sphinx-build docs docs/build
-
-docs/api :
-	sphinx-apidoc --ext-intersphinx --ext-mathjax -o docs macrodynamics
+	sphinx-build . docs/_build
