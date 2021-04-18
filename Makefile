@@ -1,11 +1,12 @@
 .PHONY : tests clean install docs
 
-requirements.txt test-requirements.txt : %.txt : %.in setup.py
-	pip-compile --upgrade -v $< --output-file $*.tmp
-	./make_paths_relative.py < $*.tmp > $@
+requirements : requirements.txt test-requirements.txt
 
-install :
-	pip install -r requirements.txt
+requirements.txt test-requirements.txt : %.txt : %.in setup.py
+	pip-compile --upgrade -v $< --output-file $@
+
+sync : requirements.txt
+	pip-sync $<
 
 clean : clean/tests clean/docs
 	rm -rf build
