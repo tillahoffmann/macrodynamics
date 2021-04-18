@@ -69,6 +69,9 @@ intersphinx_mapping = {
 }
 
 
+master_doc = 'README'
+
+
 LOGGER = sphinx.util.logging.getLogger("validator")
 
 

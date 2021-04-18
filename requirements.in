@@ -1,4 +1,4 @@
--e .[tests]
+-e file:.[tests]
 networkx
 jupyterlab
 pyshp
