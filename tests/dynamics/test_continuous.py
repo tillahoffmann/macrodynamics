@@ -194,3 +194,16 @@ def test_continuous_oscillation_optimal_control(continuous_oscillation_operator,
     # Assert that we get the "right" result if the control weight is zero
     if control_weight == 0:
         md.assert_correlated(setpoint, z_wc)
+
+
+def test_continuous_oscillation_supramatrix(continuous_oscillation_operator, density,
+                                            coordinate_tensor, num_dims, periodic):
+    if not periodic:
+        pytest.xfail("not yet implemented for non-periodic boundary conditions")
+    center = np.random.uniform(0, 1, num_dims)
+    ic = md.evaluate_gaussian_kernel(coordinate_tensor, center, 1, 0.05 ** 2)
+    ic = np.asarray([ic, np.zeros_like(ic)])
+    grad1 = continuous_oscillation_operator.evaluate_gradient(ic)
+    grad2 = continuous_oscillation_operator.supramatrix.dot(ic.ravel()).reshape(ic.shape)
+    corrcoef = np.corrcoef(grad1.ravel(), grad2.ravel())
+    assert corrcoef[0, 1] > 0.95

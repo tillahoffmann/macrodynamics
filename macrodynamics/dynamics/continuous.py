@@ -87,7 +87,7 @@ class ContinuousOperator(Operator):
     @classmethod
     def from_matrix(cls, weight, kernel, kernel_weight_x, kernel_weight_y, dx, **kwargs):
         """
-        Create a differential operatof for scalar dynamics.
+        Create a differential operator for scalar dynamics.
 
         Parameters
         ----------
@@ -343,3 +343,27 @@ class ContinuousOperator(Operator):
         control = self._evaluate_fft(ft_control, False)
         # Extract the region near the origin
         return origin_array(control, self.shape[1:], axes=1 + np.arange(self.ndim))
+
+    @lazy_property
+    def supramatrix(self):
+        flat_shape = (self.shape[0], self.shape[0], -1)
+        # Obtain the convolution as one big matrix operation.
+        supra = self.kernel.reshape(flat_shape)
+        supra = np.asarray([np.roll(supra, i, axis=-1) for i in range(supra.shape[-1])])
+        # Roll the axes into the right positions.
+        supra = np.rollaxis(supra, 0, start=4)
+
+        # Pre- and post-multiply with the kernel weights.
+        supra_weight_x = self.kernel_weight_x.reshape(flat_shape)
+        supra_weight_y = self.kernel_weight_y.reshape(flat_shape)
+        supra = np.einsum('ijx,jkxy,kly->ilxy', supra_weight_x, supra, supra_weight_y) * self.dV
+
+        # Add the weight for the independent evolution.
+        supra_weight = self.weight.reshape(flat_shape)
+        i, j = np.diag_indices(supra.shape[-1])
+        supra[..., i, j] += supra_weight
+
+        # Reshape into a linear operator.
+        supra = np.rollaxis(supra, 2, 1)
+        size = np.prod(self.shape)
+        return supra.reshape((size, size))
