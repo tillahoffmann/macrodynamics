@@ -198,8 +198,6 @@ def test_continuous_oscillation_optimal_control(continuous_oscillation_operator,
 
 def test_continuous_oscillation_supramatrix(continuous_oscillation_operator, density,
                                             coordinate_tensor, num_dims, periodic):
-    if not periodic:
-        pytest.xfail("not yet implemented for non-periodic boundary conditions")
     center = np.random.uniform(0, 1, num_dims)
     ic = md.evaluate_gaussian_kernel(coordinate_tensor, center, 1, 0.05 ** 2)
     ic = np.asarray([ic, np.zeros_like(ic)])
