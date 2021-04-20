@@ -346,6 +346,10 @@ class ContinuousOperator(Operator):
 
     @lazy_property
     def supramatrix(self):
+        """
+        numpy.ndarray : Supra operator that encodes the effect of this operator as a matrix that can
+                        be applied to a ravelled state tensor.
+        """
         # Evaluate the number of states and shape of the state field.
         nstates, *dims = self.shape
         ndims = len(dims)
