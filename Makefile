@@ -16,7 +16,7 @@ clean/tests :
 	rm -rf .pytest_cache
 
 tests :
-	py.test tests --lf --cov=macrodynamics --cov-report=html --cov-report=term-missing \
+	py.test tests -v --ff --cov=macrodynamics --cov-report=html --cov-report=term-missing \
 		--cov-fail-under=100
 
 clean/docs :

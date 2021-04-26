@@ -87,7 +87,7 @@ class ContinuousOperator(Operator):
     @classmethod
     def from_matrix(cls, weight, kernel, kernel_weight_x, kernel_weight_y, dx, **kwargs):
         """
-        Create a differential operatof for scalar dynamics.
+        Create a differential operator for scalar dynamics.
 
         Parameters
         ----------
@@ -343,3 +343,46 @@ class ContinuousOperator(Operator):
         control = self._evaluate_fft(ft_control, False)
         # Extract the region near the origin
         return origin_array(control, self.shape[1:], axes=1 + np.arange(self.ndim))
+
+    @lazy_property
+    def supramatrix(self):
+        """
+        numpy.ndarray : Supra operator that encodes the effect of this operator as a matrix that can
+                        be applied to a ravelled state tensor.
+        """
+        # Evaluate the number of states and shape of the state field.
+        nstates, *dims = self.shape
+        ndims = len(dims)
+        size = np.prod(dims)
+        flat_shape = (nstates, nstates, size)
+        # Get the indices we need to translate the convolution into a matrix operation.
+        indices = np.indices(self.kernel.shape[2:])
+        indices = np.reshape(indices, (ndims, -1)).T
+        # Evaluate all possible pairwise interactions.
+        supra = np.asarray([np.roll(self.kernel, i, axis=2 + np.arange(ndims)) for i in indices])
+        # Move the state dimensions to the front.
+        supra = np.moveaxis(supra, (1, 2), (0, 1))
+        # Reshape the array to get (nstates, nstates, *spatial dimensions, *spatial dimensions).
+        supra = np.reshape(supra, (nstates, nstates) + 2 * self.kernel.shape[2:])
+
+        # Discard additional points due to non-periodic boundary conditions.
+        slices = (slice(None), slice(None)) + 2 * tuple(slice(0, dim) for dim in dims)
+        supra = supra[slices]
+        # Flatten the supra matrix.
+        supra = np.reshape(supra, (nstates, nstates, size, size))
+
+        # Pre- and post-multiply with the kernel weights.
+        supra_weight_x = self.kernel_weight_x.reshape(flat_shape)
+        supra_weight_y = self.kernel_weight_y.reshape(flat_shape)
+        supra = np.einsum('ijx,jkxy,kly->ilxy', supra_weight_x, supra, supra_weight_y) * self.dV
+
+        # Add the weight for the independent evolution.
+        supra_weight = self.weight.reshape(flat_shape)
+        i, j = np.diag_indices(size)
+        supra[..., i, j] += supra_weight
+
+        # Reshape into a linear operator.
+        supra = np.moveaxis(supra, 2, 1)
+        size = np.prod(self.shape)
+        supra = supra.reshape((size, size))
+        return supra
