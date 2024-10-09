@@ -106,4 +106,4 @@ venv.bak/
 .DS_Store
 .vscode/
 macrodynamics/**/*.html
-playground
+playground*
