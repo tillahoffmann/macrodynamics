@@ -1,11 +1,5 @@
 from setuptools import setup, find_packages
 
-tests_require = [
-    "pytest",
-    "pytest-cov",
-    "sphinx",
-    "numpydoc",
-]
 
 setup(
     name="macrodynamics",
@@ -18,10 +12,6 @@ setup(
         "scipy",
         "matplotlib",
     ],
-    tests_require=tests_require,
-    extras_require={
-        "tests": tests_require,
-    },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Science/Research",

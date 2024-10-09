@@ -1,8 +1,12 @@
 -e file:.[tests]
-networkx
 jupyterlab
-pyshp
-shapely
-pyproj
+networkx
+numpydoc
 pylint
+pyproj
+pyshp
+pytest
+pytest-cov
+shapely
+sphinx
 tqdm

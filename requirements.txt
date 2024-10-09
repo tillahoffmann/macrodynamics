@@ -189,7 +189,7 @@ numpy==2.1.2
     #   scipy
     #   shapely
 numpydoc==1.8.0
-    # via macrodynamics
+    # via -r requirements.in
 overrides==7.7.0
     # via jupyter-server
 packaging==24.1
@@ -245,10 +245,10 @@ pyshp==2.3.1
     # via -r requirements.in
 pytest==8.3.3
     # via
-    #   macrodynamics
+    #   -r requirements.in
     #   pytest-cov
 pytest-cov==5.0.0
-    # via macrodynamics
+    # via -r requirements.in
 python-dateutil==2.9.0.post0
     # via
     #   arrow
@@ -306,7 +306,7 @@ soupsieve==2.6
     # via beautifulsoup4
 sphinx==8.0.2
     # via
-    #   macrodynamics
+    #   -r requirements.in
     #   numpydoc
 sphinxcontrib-applehelp==2.0.0
     # via sphinx
