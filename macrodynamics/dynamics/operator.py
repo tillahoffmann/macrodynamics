@@ -9,6 +9,7 @@ class Operator:
     """
     Base class for differential operators.
     """
+
     @lazy_property
     def shape(self):
         """tuple : Shape of the state array."""
@@ -34,8 +35,8 @@ class Operator:
 
         Notes
         -----
-        If `evaluate_gradient` does not depend on `t`, the corresponding differential equation is
-        homogeneous.
+        If `evaluate_gradient` does not depend on `t`, the corresponding differential
+        equation is homogeneous.
         """
         raise NotImplementedError
 
@@ -61,8 +62,9 @@ class Operator:
 
     def _evaluate_flat_gradient(self, t, z, control, callback=None):
         """
-        Helper function to reshape `z` to the same shape as the state vector associated with this
-        operator if necessary, compute the time derivative, and flatten the gradient.
+        Helper function to reshape `z` to the same shape as the state vector associated
+        with this operator if necessary, compute the time derivative, and flatten the
+        gradient.
         """
         z = np.reshape(z, self.shape)
         grad = self.evaluate_gradient(z, t, control)
@@ -72,17 +74,23 @@ class Operator:
 
     def _assert_valid_shape(self, z):
         """
-        Helper function to assert that `z` has the same shape as the state vector associated with
-        this operator.
+        Helper function to assert that `z` has the same shape as the state vector
+        associated with this operator.
         """
         if z is None:
             return
         z = np.atleast_2d(z)
-        assert z.shape == self.shape, "expected state shape `%s` (state dim, *spatial dims) but " \
-            "got `%s`" % (self.shape, z.shape)
+        assert (
+            z.shape == self.shape
+        ), "expected state shape `%s` (state dim, *spatial dims) but " "got `%s`" % (
+            self.shape,
+            z.shape,
+        )
         return z
 
-    def integrate_numeric(self, z, t, control=None, callback=None, method='LSODA', **kwargs):
+    def integrate_numeric(
+        self, z, t, control=None, callback=None, method="LSODA", **kwargs
+    ):
         """
         Solve for `z` as a function of `t` numerically.
 
@@ -112,7 +120,9 @@ class Operator:
 
         # Solve the initial value problem
         result = scipy.integrate.solve_ivp(
-            ft.partial(self._evaluate_flat_gradient, callback=callback, control=control),
+            ft.partial(
+                self._evaluate_flat_gradient, callback=callback, control=control
+            ),
             (times[0], times[-1]),
             z.ravel(),
             t_eval=times,
@@ -120,7 +130,7 @@ class Operator:
             **kwargs
         )
         # Reshape the flattened array to the desired shape
-        z = result.y.T.reshape((-1, * self.shape))
+        z = result.y.T.reshape((-1, *self.shape))
         return z[-1] if np.isscalar(t) else z
 
     def integrate_naive(self, z, t, control=None):
@@ -143,14 +153,16 @@ class Operator:
 
         Notes
         -----
-        This function is expected to perform worse in terms of performance and accuracy than
-        `integrate_numeric`.
+        This function is expected to perform worse in terms of performance and accuracy
+        than `integrate_numeric`.
         """
         self._assert_valid_shape(z)
         zs = [z]
 
         if np.ndim(t) != 1:
-            raise ValueError("time vector must be one-dimensional for naive integration")
+            raise ValueError(
+                "time vector must be one-dimensional for naive integration"
+            )
 
         time = t[0]
         for next_time in t[1:]:
@@ -185,11 +197,11 @@ class Operator:
             Solution of `z` for each `t`.
         """
         self._assert_valid_shape(z)
-        if method == 'analytic':
+        if method == "analytic":
             return self.integrate_analytic(z, t, control, **kwargs)
-        elif method == 'numeric':
+        elif method == "numeric":
             return self.integrate_numeric(z, t, control, **kwargs)
-        elif method == 'naive':
+        elif method == "naive":
             return self.integrate_naive(z, t, control, **kwargs)
         else:
             raise KeyError(method)

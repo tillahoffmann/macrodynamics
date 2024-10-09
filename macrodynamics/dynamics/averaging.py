@@ -24,8 +24,8 @@ def evaluate_discrete_operator(adjacency):
     """
     n = adjacency.shape[0]
     in_degree = adjacency.sum(axis=1)
-    # Replace zeros by ones because the corresponding row will only contain zeros anyway and we
-    # don't want nans
+    # Replace zeros by ones because the corresponding row will only contain zeros anyway
+    # and we don't want nans.
     in_degree = np.where(in_degree > 0, in_degree, 1).astype(float)
     if sparse.issparse(adjacency):
         matrix = adjacency / in_degree - sparse.spdiags(np.ones(n), 0, n, n)
@@ -54,14 +54,15 @@ def evaluate_continuous_operator(connectivity, density, dx, **kwargs):
     operator : ContinuousOperator
         Differential operator for opinion averaging.
     """
-    # The contributions are down-weighted by the average degree of the nodes
+    # The contributions are down-weighted by the average degree of the nodes.
     kernel_weight_x = 1 / evaluate_expected_degree(connectivity, density, dx)
-    # And contributions are due to the connectivity kernel weighted by the density
+    # And contributions are due to the connectivity kernel weighted by the density.
     kernel = connectivity
     kernel_weight_y = density
-    # The elementwise weight is -1 because the gradient is proportional to the difference
-    # between the average and the current position
-    weight = - np.ones_like(density)
+    # The elementwise weight is -1 because the gradient is proportional to the
+    # difference between the average and the current position.
+    weight = -np.ones_like(density)
 
-    return ContinuousOperator.from_matrix(weight, kernel, kernel_weight_x, kernel_weight_y, dx,
-                                          **kwargs)
+    return ContinuousOperator.from_matrix(
+        weight, kernel, kernel_weight_x, kernel_weight_y, dx, **kwargs
+    )

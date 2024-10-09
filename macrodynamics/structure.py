@@ -16,8 +16,8 @@ def evaluate_distance(x, y, cov=1.0, domain=1.0):
     cov : numpy.ndarray
         Covariance matrix (can be a scalar, length-`k` vector or `(k, k)` matrix).
     domain : array_like
-        Domain for periodic boundary conditions. If `None`, non-periodic boundary conditions are
-        used.
+        Domain for periodic boundary conditions. If `None`, non-periodic boundary
+        conditions are used.
 
     Returns
     -------
@@ -28,11 +28,13 @@ def evaluate_distance(x, y, cov=1.0, domain=1.0):
     delta = x - y
     if domain is not None:
         domain = np.asarray(domain)
-        # If x - y is smaller than -0.5, then x is very far left of y. But in the next repetition of the space,
-        # x lies to the right of y such that the appropriate distance is 1 + x - y = 1 + delta.
+        # If x - y is smaller than -0.5, then x is very far left of y. But in the next
+        # repetition of the space, x lies to the right of y such that the appropriate
+        # distance is 1 + x - y = 1 + delta.
         delta += (delta < -0.5 * domain) * domain
-        # If x - y is larger than 0.5, then x is very far right of y. But in the next repetition of the space,
-        # y lies to the right of x such that the appropriate distance is x - (1 + y) = delta - 1.
+        # If x - y is larger than 0.5, then x is very far right of y. But in the next
+        # repetition of the space, y lies to the right of x such that the appropriate
+        # distance is x - (1 + y) = delta - 1.
         delta -= (delta > 0.5 * domain) * domain
 
     # Use a diagonal scale
@@ -42,7 +44,7 @@ def evaluate_distance(x, y, cov=1.0, domain=1.0):
         raise ValueError("cov must be a scalar, vector or matrix")
 
     # Evaluate the distance by contracting indices
-    return np.sqrt(np.einsum('...i,ij,...j->...', delta, np.linalg.inv(cov), delta))
+    return np.sqrt(np.einsum("...i,ij,...j->...", delta, np.linalg.inv(cov), delta))
 
 
 def evaluate_gaussian_kernel(x, y, norm, cov, domain=1.0):
@@ -60,8 +62,8 @@ def evaluate_gaussian_kernel(x, y, norm, cov, domain=1.0):
     cov : numpy.ndarray
         Covariance matrix (can be a scalar, length-`k` vector or `(k, k)` matrix).
     domain : array_like
-        Domain for periodic boundary conditions. If `None`, non-periodic boundary conditions are
-        used.
+        Domain for periodic boundary conditions. If `None`, non-periodic boundary
+        conditions are used.
 
     Returns
     -------
@@ -87,8 +89,8 @@ def evaluate_tophat_kernel(x, y, norm, cov, domain=1.0):
     cov : numpy.ndarray
         Covariance matrix (can be a scalar, length-`k` vector or `(k, k)` matrix).
     domain : array_like
-        Domain for periodic boundary conditions. If `None`, non-periodic boundary conditions are
-        used.
+        Domain for periodic boundary conditions. If `None`, non-periodic boundary
+        conditions are used.
 
     Returns
     -------
@@ -114,8 +116,8 @@ def evaluate_laplace_kernel(x, y, norm, cov, domain=1.0):
     cov : numpy.ndarray
         Covariance matrix (can be a scalar, length-`k` vector or `(k, k)` matrix).
     domain : array_like
-        Domain for periodic boundary conditions. If `None`, non-periodic boundary conditions are
-        used.
+        Domain for periodic boundary conditions. If `None`, non-periodic boundary
+        conditions are used.
 
     Returns
     -------
@@ -141,8 +143,8 @@ def evaluate_uniform_kernel(x, y, norm, cov=None, domain=1.0):
     cov : numpy.ndarray
         Covariance matrix (can be a scalar, length-`k` vector or `(k, k)` matrix).
     domain : array_like
-        Domain for periodic boundary conditions. If `None`, non-periodic boundary conditions are
-        used.
+        Domain for periodic boundary conditions. If `None`, non-periodic boundary
+        conditions are used.
 
     Returns
     -------
@@ -152,7 +154,7 @@ def evaluate_uniform_kernel(x, y, norm, cov=None, domain=1.0):
     return norm * np.ones(np.broadcast(x, y).shape[:-1])
 
 
-def sample_adjacency(coordinates, kernel, condensed=False, distribution='bernoulli'):
+def sample_adjacency(coordinates, kernel, condensed=False, distribution="bernoulli"):
     """
     Sample an adjacency matrix.
 
@@ -174,8 +176,10 @@ def sample_adjacency(coordinates, kernel, condensed=False, distribution='bernoul
     """
     i, j = np.triu_indices(coordinates.shape[0], 1)
     kernel = kernel(coordinates[i], coordinates[j])
-    if distribution == 'bernoulli':
-        assert np.all((kernel >= 0) & (kernel <= 1)), "kernel values must be in the interval [0, 1]"
+    if distribution == "bernoulli":
+        assert np.all(
+            (kernel >= 0) & (kernel <= 1)
+        ), "kernel values must be in the interval [0, 1]"
         adjacency = np.random.uniform(0, 1, kernel.shape) < kernel
     else:
         raise KeyError(distribution)

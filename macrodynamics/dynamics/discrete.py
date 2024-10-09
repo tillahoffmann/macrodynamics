@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import sparse
 
-from ..util import lazy_property, to_array, is_homogeneous, add_leading_dims, nexpm1
+from ..util import lazy_property, nexpm1
 from .operator import Operator
 
 
@@ -12,24 +12,34 @@ class DiscreteOperator(Operator):
     Parameters
     ----------
     matrix : numpy.ndarray or scipy.sparse.spmatrix
-        Flattened evolution tensor with shape `(k * n, k * n)` for vector dynamics, where `n` is
-        the number of nodes and `k` is the number of state variables.
+        Flattened evolution tensor with shape `(k * n, k * n)` for vector dynamics,
+        where `n` is the number of nodes and `k` is the number of state variables.
     shape : numpy.ndarray
         Shape `(k, n)` of the state vector.
 
     Notes
     -----
-    If `matrix` is a sparse matrix, it is recommended to use the `csr_matrix` format because it is
-    particularly efficient for the dot product used in the calculation of the gradient. See
-    https://docs.scipy.org/doc/scipy/reference/sparse.html#usage-information for details.
+    If `matrix` is a sparse matrix, it is recommended to use the `csr_matrix` format
+    because it is particularly efficient for the dot product used in the calculation of
+    the gradient. See
+    https://docs.scipy.org/doc/scipy/reference/sparse.html#usage-information for
+    details.
     """
+
     def __init__(self, matrix, shape):
         self.matrix = matrix
         self._shape = shape
-        assert len(self.shape) == 2, "shape must have length two but got %d" % len(self.shape)
+        assert len(self.shape) == 2, "shape must have length two but got %d" % len(
+            self.shape
+        )
         matrix_rank = np.prod(self.shape)
-        assert self.matrix.shape == (matrix_rank, matrix_rank), \
-            "expected matrix shape %s but got %s" % ((matrix_rank, matrix_rank), self.matrix.shape)
+        assert self.matrix.shape == (
+            matrix_rank,
+            matrix_rank,
+        ), "expected matrix shape %s but got %s" % (
+            (matrix_rank, matrix_rank),
+            self.matrix.shape,
+        )
 
     @classmethod
     def from_tensor(cls, tensor):
@@ -39,9 +49,9 @@ class DiscreteOperator(Operator):
         Parameters
         ----------
         tensor : list
-            List of lists of matrices constituting an evolution tensor with shape `(k, k, n, n)` for
-            vector dynamics, where `n` is the number of nodes and `k` is the number of state
-            variables.
+            List of lists of matrices constituting an evolution tensor with shape
+            `(k, k, n, n)` for vector dynamics, where `n` is the number of nodes and `k`
+            is the number of state variables.
 
         Returns
         -------
@@ -80,15 +90,15 @@ class DiscreteOperator(Operator):
         Parameters
         ----------
         matrix : numpy.ndarray
-            Evolution matrix with shape `(n, n)` for scalar dynamics, where `n` is the number of
-            nodes.
+            Evolution matrix with shape `(n, n)` for scalar dynamics, where `n` is the
+            number of nodes.
 
         Returns
         -------
         operator : DiscreteOperator
             Operator encoding the dynamics.
         """
-        return cls(matrix, (1, ) + matrix.shape[:1])
+        return cls(matrix, (1,) + matrix.shape[:1])
 
     @lazy_property
     def issparse(self):
@@ -124,18 +134,19 @@ class DiscreteOperator(Operator):
     def integrate_analytic(self, z, t, control=None):
         z = self._assert_valid_shape(z)
         control = self._assert_valid_shape(control)
-        # Project into the diagonal basis
+        # Project into the diagonal basis.
         z = np.dot(self.ievecs, z.ravel())
-        # Evolve the state (which has shape (number of time steps, number of state variables))
+        # Evolve the state (which has shape
+        # .(number of time steps, number of state variables))
         t_vector = np.reshape(t, (-1, 1))
         z = np.exp(self.evals * t_vector) * z
         if control is not None:
-            # Project into the diagonal basis
+            # Project into the diagonal basis.
             control = np.dot(self.ievecs, control.ravel())
             # Evolve the state
             z += control * nexpm1(self.evals, t_vector)
-        # Project back into the real space
-        z = np.einsum('ij,tj->ti', self.evecs, z)
+        # Project back into the real space.
+        z = np.einsum("ij,tj->ti", self.evecs, z)
         z = np.reshape(z, (-1, *self.shape))
         return z[-1] if np.isscalar(t) else z
 

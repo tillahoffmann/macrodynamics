@@ -14,8 +14,12 @@ clean/tests :
 	rm -rf .pytest_cache
 
 tests :
-	py.test tests -v --ff --cov=macrodynamics --cov-report=html --cov-report=term-missing \
-		--cov-fail-under=100
+	py.test tests -v --ff --cov=macrodynamics --cov-report=html \
+		--cov-report=term-missing --cov-fail-under=100
+
+lint :
+	black --check .
+	flake8
 
 clean/docs :
 	rm -rf docs/_build

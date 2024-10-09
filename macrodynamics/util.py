@@ -44,12 +44,23 @@ def smoothed_sum(points, data, values, precision):
         precision = np.eye(d) * precision
     elif np.ndim(precision) == 1:
         precision = np.diag(precision)
-    assert np.shape(precision) == (d, d), "data have dimension %d but precision has shape %s" % \
-        (d, precision.shape)
+    assert np.shape(precision) == (
+        d,
+        d,
+    ), "data have dimension %d but precision has shape %s" % (d, precision.shape)
 
-    # Evaluate the weight with shape (n, np.prod(spatial_shape)) and normalisation constant
-    weight = np.exp(-np.square(spatial.distance.cdist(data, np.reshape(points, (-1, d)),
-                                                      metric='mahalanobis', VI=precision / 2)))
+    # Evaluate the weight with shape (n, np.prod(spatial_shape)) and normalisation
+    # constant.
+    weight = np.exp(
+        -np.square(
+            spatial.distance.cdist(
+                data,
+                np.reshape(points, (-1, d)),
+                metric="mahalanobis",
+                VI=precision / 2,
+            )
+        )
+    )
     norm = np.sqrt(np.linalg.det(precision / (2 * np.pi)))
 
     # Evaluate the weighted sum of the state variables with shape
@@ -59,7 +70,7 @@ def smoothed_sum(points, data, values, precision):
     return result.reshape((*state_shape, *spatial_shape)) * norm
 
 
-def smoothed_statistic(points, data, values, precision, statistic='mean'):
+def smoothed_statistic(points, data, values, precision, statistic="mean"):
     """
     Evaluate a smoothed statistic similar to `scipy.stats.binned_statistic_dd`.
 
@@ -79,20 +90,22 @@ def smoothed_statistic(points, data, values, precision, statistic='mean'):
     Returns
     -------
     statistic : numpy.ndarray
-        Statistic evaluated at the desired points with shape `(*state_dims, *spatial_dims)`.
+        Statistic evaluated at the desired points with shape
+        `(*state_dims, *spatial_dims)`.
     """
-    if statistic == 'count':
+    if statistic == "count":
         return smoothed_sum(points, data, np.ones(data.shape[0]), precision)
-    elif statistic == 'sum':
+    elif statistic == "sum":
         return smoothed_sum(points, data, values, precision)
-    elif statistic == 'mean':
-        return smoothed_statistic(points, data, values, precision, 'sum') / \
-            smoothed_statistic(points, data, values, precision, 'count')
-    elif statistic == 'var':
-        _count = smoothed_statistic(points, data, values, precision, 'count')
-        _sum = smoothed_statistic(points, data, values, precision, 'sum')
+    elif statistic == "mean":
+        return smoothed_statistic(
+            points, data, values, precision, "sum"
+        ) / smoothed_statistic(points, data, values, precision, "count")
+    elif statistic == "var":
+        _count = smoothed_statistic(points, data, values, precision, "count")
+        _sum = smoothed_statistic(points, data, values, precision, "sum")
         _mean = _sum / _count
-        _sum2 = smoothed_statistic(points, data, values * values, precision, 'sum')
+        _sum2 = smoothed_statistic(points, data, values * values, precision, "sum")
         return _sum2 / _count - _mean * _mean
     else:
         raise KeyError(statistic)
@@ -100,8 +113,8 @@ def smoothed_statistic(points, data, values, precision, statistic='mean'):
 
 def symmetric_vminmax(*xs):
     """
-    Evaluate keyword arguments for plotting functions taking `vmin` and `vmax` arguments such that
-    `vmax` is the maximum of the absolute value of `*xs` and `vmin = -vmax`.
+    Evaluate keyword arguments for plotting functions taking `vmin` and `vmax` arguments
+    such that `vmax` is the maximum of the absolute value of `*xs` and `vmin = -vmax`.
 
     Parameters
     ----------
@@ -116,8 +129,8 @@ def symmetric_vminmax(*xs):
     # Map the maximum of the absolute value over the arguments
     vmax = max([np.max(np.abs(x)) for x in xs])
     return {
-        'vmax': vmax,
-        'vmin': -vmax,
+        "vmax": vmax,
+        "vmin": -vmax,
     }
 
 
@@ -165,8 +178,12 @@ def convolve(a, b, dx=1):
     """
     # Compute the differential volume element
     dV = np.prod(np.ones(np.ndim(a)) * dx)
-    np.testing.assert_array_less(a.shape, np.asarray(b.shape) + 1, "expected first shape to be smaller or equal to the "
-                                 "second but got %s > %s" % (a.shape, b.shape))
+    np.testing.assert_array_less(
+        a.shape,
+        np.asarray(b.shape) + 1,
+        "expected first shape to be smaller or equal to the "
+        "second but got %s > %s" % (a.shape, b.shape),
+    )
     # Take the transform
     fft_a = np.fft.rfftn(a, b.shape)
     fft_b = np.fft.rfftn(b, b.shape)
@@ -224,15 +241,17 @@ def lazy_property(func):
     decorated : property
         Function acting as a lazy property.
     """
+
     @property
     @ft.wraps(func)
     def _wrapper(self):
         # Try to get the value
-        _name = '__lazy_%s' % func.__name__
+        _name = "__lazy_%s" % func.__name__
         if getattr(self, _name, None) is None:
             # Evaluate if necessary
             setattr(self, _name, func(self))
         return getattr(self, _name)
+
     return _wrapper
 
 
@@ -243,11 +262,12 @@ def list_fixture(params, ids=None, **kwargs):
     Parameters
     ----------
     params : list
-        List of parameters which will cause multiple invocations of the fixture function and all of
-        the tests using it.
+        List of parameters which will cause multiple invocations of the fixture function
+        and all of the tests using it.
     ids : list
-        List of string ids each corresponding to the `params` so that they are part of the test id.
-        If no `ids` are provided they will be generated automatically from the `params`.
+        List of string ids each corresponding to the `params` so that they are part of
+        the test id. If no `ids` are provided they will be generated automatically from
+        the `params`.
     **kwargs : dict
         Keyword arguments passed to `pytest.fixture`.
 
@@ -261,6 +281,7 @@ def list_fixture(params, ids=None, **kwargs):
     @pytest.fixture(params=params, ids=ids, **kwargs)
     def _wrapper(request):
         return request.param
+
     return _wrapper
 
 
@@ -287,14 +308,17 @@ def origin_array(arr, newshape, axes=None):
         axes = np.arange(arr.ndim)
     else:
         axes = np.asarray(axes)
-    assert len(axes) == len(newshape), "`newshape` has length %d but there are %d axes" % \
-        (len(newshape), len(axes))
+    assert len(axes) == len(
+        newshape
+    ), "`newshape` has length %d but there are %d axes" % (len(newshape), len(axes))
     # Determine the shape
     shape = np.asarray(arr.shape)
     shape[axes] = newshape
     # Make sure the slice is sensible
-    assert np.all(shape <= arr.shape), "expected the output shape to be smaller than or equal to " \
+    assert np.all(shape <= arr.shape), (
+        "expected the output shape to be smaller than or equal to "
         "the input shape %s but got %s" % (arr.shape, shape)
+    )
     # Create the slices
     myslice = [slice(0, s) for s in shape]
     return arr[tuple(myslice)]
@@ -328,8 +352,8 @@ def first_element(arr, axis=None, squeeze=False):
     axis : tuple
         Axis along which to return the first element (default is all axes).
     squeeze : tuple or bool
-        Axis along which to squeeze the first element if possible or `True` to squeeze along all
-        axes (default is no axes).
+        Axis along which to squeeze the first element if possible or `True` to squeeze
+        along all axes (default is no axes).
 
     Returns
     -------
@@ -396,7 +420,8 @@ def coordinate_tensors(*xi, periodic, next_fast_len=True, **kwargs):
     coordinate_tensor : numpy.ndarray
         Coordinate tensor for the field.
     kernel_coordinate_tensor : numpy.ndarray
-        Coordinate tensor for the kernel (identical to `coordinate_tensor` if `periodic == True`).
+        Coordinate tensor for the kernel (identical to `coordinate_tensor` if
+        `periodic == True`).
     domain : numpy.ndarray
         Domain for the periodicity of the kernel with one entry for each dimension.
     """
@@ -405,7 +430,9 @@ def coordinate_tensors(*xi, periodic, next_fast_len=True, **kwargs):
     # Iterate over the different 1D grids
     for i, x in enumerate(xi):
         dx = np.diff(x)
-        assert is_homogeneous(dx), "the sample spacing along axis %d is not homogeneous" % i
+        assert is_homogeneous(dx), (
+            "the sample spacing along axis %d is not homogeneous" % i
+        )
         dxi.append(dx[0])
         lengths.append(len(x))
 
@@ -426,7 +453,11 @@ def coordinate_tensors(*xi, periodic, next_fast_len=True, **kwargs):
     # Construct the tensors
     kernel_xi = [dx * np.arange(length) for length, dx in zip(lengths, dxi)]
 
-    return coordinate_tensor(*xi, **kwargs), coordinate_tensor(*kernel_xi, **kwargs), domain
+    return (
+        coordinate_tensor(*xi, **kwargs),
+        coordinate_tensor(*kernel_xi, **kwargs),
+        domain,
+    )
 
 
 def to_array(arr):
@@ -468,7 +499,9 @@ def edgelist_to_sparse(edgelist, num_nodes, weight=None):
     """
     if weight is None:
         weight = np.ones(len(edgelist))
-    adjacency = sparse.coo_matrix((weight, np.transpose(edgelist)), (num_nodes, num_nodes))
+    adjacency = sparse.coo_matrix(
+        (weight, np.transpose(edgelist)), (num_nodes, num_nodes)
+    )
     return adjacency.tocsr()
 
 
@@ -513,9 +546,9 @@ def plot_edges(x, edges, ax=None, **kwargs):
         Collection of edges.
     """
     default_kwargs = {
-        'color': 'k',
-        'alpha': 0.5,
-        'zorder': 1,
+        "color": "k",
+        "alpha": 0.5,
+        "zorder": 1,
     }
     default_kwargs.update(kwargs)
     ax = ax or plt.gca()
@@ -549,12 +582,15 @@ def label_axes(*axes, x=0.05, y=0.95, offset=0, labels=None, **kwargs):
     elements : list
         List of text elements representing labels.
     """
-    labels = labels or 'abcdefghijklmnopqrstuvwxyz'
+    labels = labels or "abcdefghijklmnopqrstuvwxyz"
     elements = []
-    va = kwargs.pop('va', kwargs.pop('verticalalignment', 'top'))
+    va = kwargs.pop("va", kwargs.pop("verticalalignment", "top"))
     for i, ax in enumerate(np.ravel(axes)):
-        elements.append(ax.text(x, y, f'({labels[i + offset]})', va=va, transform=ax.transAxes,
-                        **kwargs))
+        elements.append(
+            ax.text(
+                x, y, f"({labels[i + offset]})", va=va, transform=ax.transAxes, **kwargs
+            )
+        )
     return elements
 
 
@@ -562,11 +598,15 @@ def _ignore_scipy_issue_9093(function):
     """
     Ignore warnings generated by https://github.com/scipy/scipy/issues/9093.
     """
+
     @ft.wraps(function)
     def _wrapper(*args, **kwargs):
         with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", "the matrix subclass is not the recommended way")
+            warnings.filterwarnings(
+                "ignore", "the matrix subclass is not the recommended way"
+            )
             return function(*args, **kwargs)
+
     return _wrapper
 
 
@@ -610,9 +650,19 @@ def assert_correlated(actual, desired, tol=1e-3):
     """
     actual = np.asarray(actual)
     desired = np.asarray(desired)
-    assert actual.shape == desired.shape, "`actual` has shape %s but `desired` has shape %s" % \
-        (actual.shape, desired.shape)
+    assert (
+        actual.shape == desired.shape
+    ), "`actual` has shape %s but `desired` has shape %s" % (
+        actual.shape,
+        desired.shape,
+    )
     corrcoef = np.corrcoef(actual.ravel(), desired.ravel())[0, 1]
     delta = 1 - corrcoef
-    assert delta < tol, "correlation coefficient %f differs from 1 by %f, exceeding tolerance %f" % \
-        (corrcoef, delta, tol)
+    assert (
+        delta < tol
+    ), "correlation coefficient %f differs from 1 by %f, exceeding tolerance %f" % (
+        corrcoef,
+        delta,
+        tol,
+    )
+

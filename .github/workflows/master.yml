@@ -17,5 +17,7 @@ jobs:
           cache: pip
       - name: Install Python dependencies
         run: pip install -r requirements.txt
+      - name: Lint code
+        run: black --check .
       - name: Run checks
         run: make tests

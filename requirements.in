@@ -1,4 +1,6 @@
 -e file:.[tests]
+black
+flake8
 jupyterlab
 networkx
 numpydoc

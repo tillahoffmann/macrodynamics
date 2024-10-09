@@ -31,18 +31,27 @@ def evaluate_discrete_operator(adjacency, angular_frequency=1, **kwargs):
     if sparse.issparse(adjacency):
         tensor = [
             (None, sparse.eye(n)),  # displacement
-            (-sparse.spdiags(in_degree.T + angular_frequency ** 2, 0, n, n) + adjacency, None)  # velocity
+            (
+                -sparse.spdiags(in_degree.T + angular_frequency**2, 0, n, n)
+                + adjacency,
+                None,
+            ),  # velocity
         ]
     else:
         tensor = [
             (np.zeros((n, n)), np.eye(n)),  # displacement
-            (-np.diag(in_degree + angular_frequency ** 2) + adjacency, np.zeros((n, n)))  # velocity
+            (
+                -np.diag(in_degree + angular_frequency**2) + adjacency,
+                np.zeros((n, n)),
+            ),  # velocity
         ]
 
     return DiscreteOperator.from_tensor(tensor, **kwargs)
 
 
-def evaluate_continuous_operator(connectivity, density, dx, angular_frequency=1, **kwargs):
+def evaluate_continuous_operator(
+    connectivity, density, dx, angular_frequency=1, **kwargs
+):
     """
     Evaluate the differential operator for opinion averaging on a graph.
 
@@ -65,14 +74,12 @@ def evaluate_continuous_operator(connectivity, density, dx, angular_frequency=1,
         Differential operator for coupled oscillators.
     """
     weight = [
+        (np.zeros_like(density), np.ones_like(density)),
         (
+            -(angular_frequency**2)
+            - evaluate_expected_degree(connectivity, density, dx),
             np.zeros_like(density),
-            np.ones_like(density)
         ),
-        (
-            - angular_frequency ** 2 - evaluate_expected_degree(connectivity, density, dx),
-            np.zeros_like(density)
-        )
     ]
 
     shape = tuple([2, 2] + [1 for _ in range(np.ndim(density))])
@@ -83,10 +90,9 @@ def evaluate_continuous_operator(connectivity, density, dx, angular_frequency=1,
             np.zeros_like(density),
             np.zeros_like(density),
         ),
-        (
-            density,
-            np.zeros_like(density)
-        )
+        (density, np.zeros_like(density)),
     ]
 
-    return ContinuousOperator(weight, kernel, kernel_weight_x, kernel_weight_y, dx, **kwargs)
+    return ContinuousOperator(
+        weight, kernel, kernel_weight_x, kernel_weight_y, dx, **kwargs
+    )
