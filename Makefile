@@ -1,8 +1,6 @@
 .PHONY : tests clean install docs
 
-requirements : requirements.txt test-requirements.txt
-
-requirements.txt test-requirements.txt : %.txt : %.in setup.py
+requirements.txt : requirements.in setup.py
 	pip-compile --upgrade -v $< --output-file $@
 
 sync : requirements.txt
