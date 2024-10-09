@@ -23,7 +23,7 @@ def test_integrate(method):
         z = np.sum(y) / num_steps
     elif method == 'trapz':
         y = np.ones(num_steps)
-        z = scipy.integrate.trapz(y, dx=1 / (num_steps - 1))
+        z = scipy.integrate.trapezoid(y, dx=1 / (num_steps - 1))
     else:
         raise KeyError(method)
 
@@ -37,6 +37,16 @@ def test_fftconvolve_convolve2d_fill(n):
     a = scipy.signal.convolve2d(x, y, 'same', 'fill')
     b = scipy.signal.fftconvolve(x, y, 'same')
     np.testing.assert_allclose(a, b)
+
+
+def _centered(arr, newsize):
+    # Return the center newsize portion of the array.
+    newsize = np.asarray(newsize)
+    currsize = np.array(arr.shape)
+    startind = (currsize - newsize) // 2
+    endind = startind + newsize
+    myslice = [slice(startind[k], endind[k]) for k in range(len(endind))]
+    return arr[tuple(myslice)]
 
 
 @pytest.mark.parametrize('boundary, n', it.product(
@@ -81,7 +91,7 @@ def test_convolve2d(boundary, n):
     z_actual = np.fft.irfftn(fx * fy, shape)
 
     # Crop (this is a noop if the image already has the right size)
-    z_actual = scipy.signal.signaltools._centered(z_actual, x.shape)
+    z_actual = _centered(z_actual, x.shape)
 
     # Check for agreement
     np.testing.assert_allclose(z_actual, z_desired, err_msg="convolutions do not agree")
