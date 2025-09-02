@@ -7,24 +7,19 @@ from .operator import Operator
 
 
 class DiscreteOperator(Operator):
-    """
-    Differential operator for linear dynamics on graphs.
+    """Differential operator for linear dynamics on graphs.
 
-    Parameters
-    ----------
-    matrix : numpy.ndarray or scipy.sparse.spmatrix
-        Flattened evolution tensor with shape `(k * n, k * n)` for vector dynamics,
-        where `n` is the number of nodes and `k` is the number of state variables.
-    shape : numpy.ndarray
-        Shape `(k, n)` of the state vector.
+    Args:
+        matrix: Flattened evolution tensor with shape `(k * n, k * n)` for vector dynamics,
+            where `n` is the number of nodes and `k` is the number of state variables.
+        shape: Shape `(k, n)` of the state vector.
 
-    Notes
-    -----
-    If `matrix` is a sparse matrix, it is recommended to use the `csr_matrix` format
-    because it is particularly efficient for the dot product used in the calculation of
-    the gradient. See
-    https://docs.scipy.org/doc/scipy/reference/sparse.html#usage-information for
-    details.
+    Note:
+        If `matrix` is a sparse matrix, it is recommended to use the `csr_matrix` format
+        because it is particularly efficient for the dot product used in the calculation of
+        the gradient. See
+        https://docs.scipy.org/doc/scipy/reference/sparse.html#usage-information for
+        details.
     """
 
     def __init__(
@@ -46,19 +41,14 @@ class DiscreteOperator(Operator):
 
     @classmethod
     def from_tensor(cls, tensor: np.ndarray) -> Self:
-        """
-        Create a differential operator for vector dynamics from an evolution tensor.
+        """Create a differential operator for vector dynamics from an evolution tensor.
 
-        Parameters
-        ----------
-        tensor : list
-            List of lists of matrices constituting an evolution tensor with shape
-            `(k, k, n, n)` for vector dynamics, where `n` is the number of nodes and `k`
-            is the number of state variables.
+        Args:
+            tensor: List of lists of matrices constituting an evolution tensor with shape
+                `(k, k, n, n)` for vector dynamics, where `n` is the number of nodes and `k`
+                is the number of state variables.
 
-        Returns
-        -------
-        operator : DiscreteOperator
+        Returns:
             Operator encoding the dynamics.
         """
         # Ensure the tensor appears as a list of lists with the right shapes
@@ -89,18 +79,13 @@ class DiscreteOperator(Operator):
 
     @classmethod
     def from_matrix(cls, matrix) -> Self:
-        """
-        Create a differential operator for scalar dynamics from an evolution matrix.
+        """Create a differential operator for scalar dynamics from an evolution matrix.
 
-        Parameters
-        ----------
-        matrix : numpy.ndarray
-            Evolution matrix with shape `(n, n)` for scalar dynamics, where `n` is the
-            number of nodes.
+        Args:
+            matrix: Evolution matrix with shape `(n, n)` for scalar dynamics, where `n` is the
+                number of nodes.
 
-        Returns
-        -------
-        operator : DiscreteOperator
+        Returns:
             Operator encoding the dynamics.
         """
         return cls(matrix, (1,) + matrix.shape[:1])

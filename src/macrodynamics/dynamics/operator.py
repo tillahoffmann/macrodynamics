@@ -19,48 +19,33 @@ class Operator:
     def evaluate_gradient(
         self, z: np.ndarray, t: float | None = None, control: np.ndarray | None = None
     ) -> np.ndarray:
-        """
-        Evaluate the time derivative of `z`.
+        """Evaluate the time derivative of `z`.
 
-        Parameters
-        ----------
-        z : numpy.ndarray
-            State for which to evaluate the gradient.
-        t : float
-            Time at which to evaluate the gradient.
-        control : numpy.ndarray
-            Static control to apply to the dynamics.
+        Args:
+            z: State for which to evaluate the gradient.
+            t: Time at which to evaluate the gradient.
+            control: Static control to apply to the dynamics.
 
-        Returns
-        -------
-        grad : numpy.ndarray
+        Returns:
             Gradient for the dynamics with the same shape as `z`.
 
-        Notes
-        -----
-        If `evaluate_gradient` does not depend on `t`, the corresponding differential
-        equation is homogeneous.
+        Note:
+            If `evaluate_gradient` does not depend on `t`, the corresponding differential
+            equation is homogeneous.
         """
         raise NotImplementedError
 
     def integrate_analytic(
         self, z: np.ndarray, t: np.ndarray, control: np.ndarray | None = None
     ) -> np.ndarray:
-        """
-        Solve for `z` as a function of `t` analytically.
+        """Solve for `z` as a function of `t` analytically.
 
-        Parameters
-        ----------
-        z : numpy.ndarray
-            Initial state.
-        t : numpy.ndarray
-            Time at which to solve for `z`.
-        control : numpy.ndarray
-            Static control to apply to the dynamics.
+        Args:
+            z: Initial state.
+            t: Time at which to solve for `z`.
+            control: Static control to apply to the dynamics.
 
-        Returns
-        -------
-        z : numpy.ndarray
+        Returns:
             Solution of `z` for each `t`.
         """
         raise NotImplementedError
@@ -122,27 +107,17 @@ class Operator:
         method: str = "LSODA",
         **kwargs,
     ) -> np.ndarray:
-        """
-        Solve for `z` as a function of `t` numerically.
+        """Solve for `z` as a function of `t` numerically.
 
-        Parameters
-        ----------
-        z : numpy.ndarray
-            Initial state.
-        t : numpy.ndarray
-            Time at which to solve for `z`.
-        control : numpy.ndarray
-            Static control to apply to the dynamics.
-        callback : callable or None
-            Function for each evaluation of the RHS.
-        method : str
-            Integration method to use. See `scipy.integrate.ode.solve_ivp` for details.
-        **kwargs : dict
-            Keyword arguments passed to `scipy.integrate.ode.solve_ivp`.
+        Args:
+            z: Initial state.
+            t: Time at which to solve for `z`.
+            control: Static control to apply to the dynamics.
+            callback: Function for each evaluation of the RHS.
+            method: Integration method to use. See `scipy.integrate.ode.solve_ivp` for details.
+            **kwargs: Keyword arguments passed to `scipy.integrate.ode.solve_ivp`.
 
-        Returns
-        -------
-        z : numpy.ndarray
+        Returns:
             Solution of `z` for each `t`.
         """
         # Validate the input tensor
@@ -167,27 +142,19 @@ class Operator:
     def integrate_naive(
         self, z: np.ndarray, t: np.ndarray, control: np.ndarray | None = None
     ) -> np.ndarray:
-        """
-        Solve for `z` as a function of `t` using naive finite difference integration.
+        """Solve for `z` as a function of `t` using naive finite difference integration.
 
-        Parameters
-        ----------
-        z : numpy.ndarray
-            Initial state.
-        t : numpy.ndarray
-            Time at which to solve for `z`.
-        control : numpy.ndarray
-            Static control to apply to the dynamics.
+        Args:
+            z: Initial state.
+            t: Time at which to solve for `z`.
+            control: Static control to apply to the dynamics.
 
-        Returns
-        -------
-        z : numpy.ndarray
+        Returns:
             Solution of `z` for each `t`.
 
-        Notes
-        -----
-        This function is expected to perform worse in terms of performance and accuracy
-        than `integrate_numeric`.
+        Note:
+            This function is expected to perform worse in terms of performance and accuracy
+            than `integrate_numeric`.
         """
         self._assert_valid_shape(z)
         zs = [z]
@@ -215,25 +182,16 @@ class Operator:
         control: np.ndarray | None = None,
         **kwargs,
     ) -> np.ndarray:
-        """
-        Solve for `z` as a function of `t`.
+        """Solve for `z` as a function of `t`.
 
-        Parameters
-        ----------
-        z : numpy.ndarray
-            Initial state.
-        t : numpy.ndarray
-            Time at which to solve for `z`.
-        method : str
-            Method used for simulation (one of 'analytic', 'numeric' or 'naive').
-        control : numpy.ndarray
-            Static control to apply to the dynamics.
-        **kwargs : dict
-            Keyword arguments passed to the selected integration `method`.
+        Args:
+            z: Initial state.
+            t: Time at which to solve for `z`.
+            method: Method used for simulation (one of 'analytic', 'numeric' or 'naive').
+            control: Static control to apply to the dynamics.
+            **kwargs: Keyword arguments passed to the selected integration `method`.
 
-        Returns
-        -------
-        z : numpy.ndarray
+        Returns:
             Solution of `z` for each `t`.
         """
         self._assert_valid_shape(z)

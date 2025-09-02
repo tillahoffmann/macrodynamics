@@ -13,9 +13,7 @@ from .operator import Operator
 
 
 class ContinuousOperator(Operator):
-    r"""
-    Differential operator for linear dynamics on continuous graphs embedded in Euclidean
-    space.
+    r"""Differential operator for linear dynamics on continuous graphs embedded in Euclidean space.
 
     The operator evaluates the gradient
 
@@ -35,22 +33,16 @@ class ContinuousOperator(Operator):
     * `L(y)` weights the effect of the field prior to applying the convolution.
     * `u(x)` is the static control field applied to the dynamics.
 
-    Parameters
-    ----------
-    weight : numpy.ndarray
-        Pointwise multiplicative weight `F(x)` for the state `z(x, t)` with shape
-        `(k, k, *n)`.
-    kernel : numpy.ndarray
-        Homogeneous interaction kernel `H(x - y)` with shape `(k, k, *n)`.
-    kernel_weight_x : numpy.ndarray
-        Pointwise multiplicative weight `G(x)` applied to the convolution with shape
-        `(k, k, *n)`.
-    kernel_weight_y : numpy.ndarray
-        Pointwise multiplicative weight `L(y)` applied to the argument of the
-        convolution `z(y, t)` with shape `(k, k, *n)` for periodic boundary conditions
-        or `>= (k, k, *2 * (n - 1))` for aperiodic boundary conditions.
-    dx : numpy.ndarray or float
-        Spacing between sample points.
+    Args:
+        weight: Pointwise multiplicative weight `F(x)` for the state `z(x, t)` with shape
+            `(k, k, *n)`.
+        kernel: Homogeneous interaction kernel `H(x - y)` with shape `(k, k, *n)`.
+        kernel_weight_x: Pointwise multiplicative weight `G(x)` applied to the convolution with shape
+            `(k, k, *n)`.
+        kernel_weight_y: Pointwise multiplicative weight `L(y)` applied to the argument of the
+            convolution `z(y, t)` with shape `(k, k, *n)` for periodic boundary conditions
+            or `>= (k, k, *2 * (n - 1))` for aperiodic boundary conditions.
+        dx: Spacing between sample points.
     """
 
     def __init__(
@@ -120,31 +112,21 @@ class ContinuousOperator(Operator):
     def from_matrix(
         cls, weight, kernel, kernel_weight_x, kernel_weight_y, dx, **kwargs
     ):
-        """
-        Create a differential operator for scalar dynamics.
+        """Create a differential operator for scalar dynamics.
 
-        Parameters
-        ----------
-        weight : numpy.ndarray
-            Pointwise multiplicative weight `F(x)` for the state `z(x, t)` with shape
-            `(k, k, *n)`.
-        kernel : numpy.ndarray
-            Homogeneous interaction kernel `H(x - y)` with shape `(k, k, *n)`.
-        kernel_weight_x : numpy.ndarray
-            Pointwise multiplicative weight `G(x)` applied to the convolution with shape
-            `(k, k, *n)`.
-        kernel_weight_y : numpy.ndarray
-            Pointwise multiplicative weight `L(y)` applied to the argument of the
-            convolution `z(y, t)` with shape `(k, k, *n)` for periodic boundary
-            conditions or `>= (k, k, *2 * (n - 1))` for aperiodic boundary conditions.
-        dx : numpy.ndarray or float
-            Spacing between sample points.
-        **kwargs : dict
-            Keyword arguments passed to the constructor.
+        Args:
+            weight: Pointwise multiplicative weight `F(x)` for the state `z(x, t)` with shape
+                `(k, k, *n)`.
+            kernel: Homogeneous interaction kernel `H(x - y)` with shape `(k, k, *n)`.
+            kernel_weight_x: Pointwise multiplicative weight `G(x)` applied to the convolution with shape
+                `(k, k, *n)`.
+            kernel_weight_y: Pointwise multiplicative weight `L(y)` applied to the
+                argument of the convolution `z(y, t)` with shape `(k, k, *n)` for periodic boundary
+                conditions or `>= (k, k, *2 * (n - 1))` for aperiodic boundary conditions.
+            dx: Spacing between sample points.
+            **kwargs: Keyword arguments passed to the constructor.
 
-        Returns
-        -------
-        operator : ContinuousOperator
+        Returns:
             Differential operator encoding scalar dynamics.
         """
         args = [
@@ -177,19 +159,13 @@ class ContinuousOperator(Operator):
         return self._evaluate_fft(self.kernel, True)
 
     def _evaluate_fft(self, x: np.ndarray, forward: bool) -> np.ndarray:
-        """
-        Evaluate the FFT of `x` along the trailing dimensions depending on `forward`.
+        """Evaluate the FFT of `x` along the trailing dimensions depending on `forward`.
 
-        Parameters
-        ----------
-        x : numpy.ndarray
-            Array for which to evaluate the Fourier transform.
-        forward : bool
-            Whether to transform the forwards transform.
+        Args:
+            x: Array for which to evaluate the Fourier transform.
+            forward: Whether to transform the forwards transform.
 
-        Returns
-        -------
-        transformed : numpy.ndarray
+        Returns:
             Transform of `x`.
         """
         shape = self.kernel.shape[2:]
@@ -201,10 +177,8 @@ class ContinuousOperator(Operator):
             return np.fft.irfftn(x, shape, axes)
 
     def _evaluate_spatial_axes(self, x: np.ndarray) -> tuple[int, ...]:
-        """
-        Evaluate the spatial axes of `x` assuming that the spatial dimensions are fully
-        determined by the connectivity kernel.
-        """
+        """Evaluate the spatial axes of `x` assuming that the spatial dimensions are
+        fully determined by the connectivity kernel."""
         x = np.asarray(x)
         offset = x.ndim - self.ndim
         assert offset >= 0
@@ -232,10 +206,7 @@ class ContinuousOperator(Operator):
 
     @lazy_property
     def _fft_operator(self):
-        """
-        numpy.ndarray : Operator responsible for the evolution of the
-        Fourier-transformed fields.
-        """
+        """Operator responsible for the evolution of the Fourier-transformed fields."""
         # Check all the weight functions are homogeneous
         if not self.has_analytic_solution:
             raise ValueError(
@@ -342,8 +313,7 @@ class ContinuousOperator(Operator):
         control_weight: np.ndarray,
         t: float,
     ) -> np.ndarray:
-        r"""
-        Evaluate the optimal control field that minimises the loss function
+        r"""Evaluate the optimal control field that minimises the loss function
 
         .. math::
 
@@ -354,24 +324,16 @@ class ContinuousOperator(Operator):
         weight placed on achieving the setpoint, and :math:`\beta` is the cost of
         applying the control.
 
-        Parameters
-        ----------
-        z : numpy.ndarray
-            Initial state with shape `(k, *n)`.
-        setpoint : numpy.ndarray
-            Desired setpoint with shape `(k, *n)`.
-        residual_weight : numpy.ndarray
-            Weight associated with the cost due to departures from the setpoint with
-            shape `(k, k)`.
-        control_weight : numpy.ndarray
-            Weight associated with the cost due to applying the control with shape
-            `(k, k)`.
-        t : float
-            Time horizon for achieving the setpoint.
+        Args:
+            z: Initial state with shape `(k, *n)`.
+            setpoint: Desired setpoint with shape `(k, *n)`.
+            residual_weight: Weight associated with the cost due to departures from the setpoint with
+                shape `(k, k)`.
+            control_weight: Weight associated with the cost due to applying the control with shape
+                `(k, k)`.
+            t: Time horizon for achieving the setpoint.
 
-        Returns
-        -------
-        control : numpy.ndarray
+        Returns:
             Optimal control field that minimises the loss function.
         """
         # Validate the inputs

@@ -13,21 +13,14 @@ def evaluate_discrete_operator(
     angular_frequency: np.ndarray | float = 1,
     **kwargs,
 ) -> DiscreteOperator:
-    """
-    Evaluate the differential operator for coupled oscillators.
+    """Evaluate the differential operator for coupled oscillators.
 
-    Parameters
-    ----------
-    adjacency : numpy.ndarray or scipy.sparse.spmatrix
-        Adjacency matrix.
-    angular_frequency : numpy.ndarray
-        Angular frequency of each individual oscillator.
-    **kwargs : dict
-        Keyword arguments passed to `DiscreteOperator.from_tensor`.
+    Args:
+        adjacency: Adjacency matrix.
+        angular_frequency: Angular frequency of each individual oscillator.
+        **kwargs: Keyword arguments passed to `DiscreteOperator.from_tensor`.
 
-    Returns
-    -------
-    operator : DiscreteOperator
+    Returns:
         Differential operator for coupled oscillators.
     """
     n = adjacency.shape[0]
@@ -61,25 +54,16 @@ def evaluate_continuous_operator(
     angular_frequency: np.ndarray | float = 1,
     **kwargs,
 ) -> ContinuousOperator:
-    """
-    Evaluate the differential operator for opinion averaging on a graph.
+    """Evaluate the differential operator for opinion averaging on a graph.
 
-    Parameters
-    ----------
-    connectivity : numpy.ndarray
-        Evaluated connectivity kernel.
-    density : numpy.ndarray or float
-        Density of nodes (use a scalar for uniform densities).
-    dx : numpy.ndarray or float
-        Spacing of sample points.
-    angular_frequency : numpy.ndarray
-        Angular frequency of each individual oscillator.
-    **kwargs : dict
-        Keyword arguments passed to `ContinuousOperator`.
+    Args:
+        connectivity: Evaluated connectivity kernel.
+        density: Density of nodes (use a scalar for uniform densities).
+        dx: Spacing of sample points.
+        angular_frequency: Angular frequency of each individual oscillator.
+        **kwargs: Keyword arguments passed to `ContinuousOperator`.
 
-    Returns
-    -------
-    operator : ContinuousOperator
+    Returns:
         Differential operator for coupled oscillators.
     """
     weight = np.asarray(

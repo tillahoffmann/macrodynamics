@@ -9,17 +9,12 @@ from .continuous import ContinuousOperator
 def evaluate_discrete_operator(
     adjacency: np.ndarray | sparse.spmatrix,
 ) -> DiscreteOperator:
-    """
-    Evaluate the differential operator for opinion averaging on a graph.
+    """Evaluate the differential operator for opinion averaging on a graph.
 
-    Parameters
-    ----------
-    adjacency : numpy.ndarray or scipy.sparse.spmatrix
-        Adjacency matrix.
+    Args:
+        adjacency: Adjacency matrix.
 
-    Returns
-    -------
-    operator : DiscreteOperator
+    Returns:
         Differential operator for opinion averaging.
     """
     n = adjacency.shape[0]
@@ -40,23 +35,15 @@ def evaluate_continuous_operator(
     dx: np.ndarray | float,
     **kwargs,
 ) -> ContinuousOperator:
-    """
-    Evaluate the differential operator for opinion averaging on a graph.
+    """Evaluate the differential operator for opinion averaging on a graph.
 
-    Parameters
-    ----------
-    connectivity : numpy.ndarray
-        Evaluated connectivity kernel.
-    density : numpy.ndarray or float
-        Density of nodes (use a scalar for uniform densities).
-    dx : numpy.ndarray or float
-        Spacing of sample points.
-    **kwargs : dict
-        Keyword arguments passed to `ContinuousOperator.from_matrix`.
+    Args:
+        connectivity: Evaluated connectivity kernel.
+        density: Density of nodes (use a scalar for uniform densities).
+        dx: Spacing of sample points.
+        **kwargs: Keyword arguments passed to `ContinuousOperator.from_matrix`.
 
-    Returns
-    -------
-    operator : ContinuousOperator
+    Returns:
         Differential operator for opinion averaging.
     """
     # The contributions are down-weighted by the average degree of the nodes.
