@@ -1,6 +1,7 @@
 import functools as ft
 import numpy as np
 import scipy.integrate
+from typing import Literal, overload, Any, Callable
 
 from ..util import lazy_property
 
@@ -11,11 +12,13 @@ class Operator:
     """
 
     @lazy_property
-    def shape(self):
+    def shape(self) -> tuple[int, ...]:
         """tuple : Shape of the state array."""
         raise NotImplementedError
 
-    def evaluate_gradient(self, z, t=None, control=None):
+    def evaluate_gradient(
+        self, z: np.ndarray, t: float | None = None, control: np.ndarray | None = None
+    ) -> np.ndarray:
         """
         Evaluate the time derivative of `z`.
 
@@ -40,7 +43,9 @@ class Operator:
         """
         raise NotImplementedError
 
-    def integrate_analytic(self, z, t, control=None):
+    def integrate_analytic(
+        self, z: np.ndarray, t: np.ndarray, control: np.ndarray | None = None
+    ) -> np.ndarray:
         """
         Solve for `z` as a function of `t` analytically.
 
@@ -60,7 +65,13 @@ class Operator:
         """
         raise NotImplementedError
 
-    def _evaluate_flat_gradient(self, t, z, control, callback=None):
+    def _evaluate_flat_gradient(
+        self,
+        t: float,
+        z: np.ndarray,
+        control: np.ndarray | None,
+        callback: Callable[[float, np.ndarray, np.ndarray], Any] | None = None,
+    ) -> np.ndarray:
         """
         Helper function to reshape `z` to the same shape as the state vector associated
         with this operator if necessary, compute the time derivative, and flatten the
@@ -72,27 +83,45 @@ class Operator:
             callback(t, z, grad)
         return grad.ravel()
 
-    def _assert_valid_shape(self, z):
+    @overload
+    def _assert_valid_shape(
+        self, z: np.ndarray, strict: Literal[True]
+    ) -> np.ndarray: ...
+
+    @overload
+    def _assert_valid_shape(
+        self, z: np.ndarray | None, strict: Literal[False]
+    ) -> np.ndarray | None: ...
+
+    @overload
+    def _assert_valid_shape(self, z: np.ndarray) -> np.ndarray: ...
+
+    def _assert_valid_shape(
+        self, z: np.ndarray | None, strict: bool = True
+    ) -> np.ndarray | None:
         """
         Helper function to assert that `z` has the same shape as the state vector
         associated with this operator.
         """
         if z is None:
+            assert not strict, "Input must not be `None`."
             return
         z = np.atleast_2d(z)
         assert z.shape == self.shape, (
-            "expected state shape `%s` (state dim, *spatial dims) but "
-            "got `%s`"
-            % (
-                self.shape,
-                z.shape,
-            )
+            f"Expected state shape `{self.shape}` (state dim, *spatial dims) but "
+            f"got `{z.shape}`."
         )
         return z
 
     def integrate_numeric(
-        self, z, t, control=None, callback=None, method="LSODA", **kwargs
-    ):
+        self,
+        z: np.ndarray,
+        t: np.ndarray | float,
+        control: np.ndarray | None = None,
+        callback: Callable[[float, np.ndarray, np.ndarray], Any] | None = None,
+        method: str = "LSODA",
+        **kwargs,
+    ) -> np.ndarray:
         """
         Solve for `z` as a function of `t` numerically.
 
@@ -135,7 +164,9 @@ class Operator:
         z = result.y.T.reshape((-1, *self.shape))
         return z[-1] if np.isscalar(t) else z
 
-    def integrate_naive(self, z, t, control=None):
+    def integrate_naive(
+        self, z: np.ndarray, t: np.ndarray, control: np.ndarray | None = None
+    ) -> np.ndarray:
         """
         Solve for `z` as a function of `t` using naive finite difference integration.
 
@@ -176,7 +207,14 @@ class Operator:
 
         return np.asarray(zs)
 
-    def integrate(self, z, t, method, control=None, **kwargs):
+    def integrate(
+        self,
+        z: np.ndarray,
+        t: np.ndarray,
+        method: Literal["analytic", "numeric", "naive"],
+        control: np.ndarray | None = None,
+        **kwargs,
+    ) -> np.ndarray:
         """
         Solve for `z` as a function of `t`.
 

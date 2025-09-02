@@ -199,7 +199,9 @@ def test_continous_oscillation_operator(
 ):
     center = np.random.uniform(0, 1, num_dims)
     ic = md.evaluate_gaussian_kernel(coordinate_tensor, center, 1, 0.05**2)
-    _test_integration(continuous_oscillation_operator, [ic, np.zeros_like(ic)])
+    _test_integration(
+        continuous_oscillation_operator, np.asarray([ic, np.zeros_like(ic)])
+    )
 
 
 def test_continous_oscillation_operator_with_control(
@@ -208,7 +210,9 @@ def test_continous_oscillation_operator_with_control(
     center = np.random.uniform(0, 1, num_dims)
     ic = md.evaluate_gaussian_kernel(coordinate_tensor, center, 1, 0.05**2)
     ic = [ic, np.zeros_like(ic)]
-    _test_integration(continuous_oscillation_operator, ic, control=np.ones_like(ic))
+    _test_integration(
+        continuous_oscillation_operator, np.asarray(ic), control=np.ones_like(ic)
+    )
 
 
 @pytest.mark.parametrize("control_weight", [0, 0.1])

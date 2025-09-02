@@ -4,11 +4,15 @@ from scipy import sparse
 from ..structure import evaluate_expected_degree
 from .discrete import DiscreteOperator
 from .continuous import ContinuousOperator
-from ..util import _ignore_scipy_issue_9093
+
+sparse.csr_matrix
 
 
-@_ignore_scipy_issue_9093
-def evaluate_discrete_operator(adjacency, angular_frequency=1, **kwargs):
+def evaluate_discrete_operator(
+    adjacency: np.ndarray | sparse.spmatrix,
+    angular_frequency: np.ndarray | float = 1,
+    **kwargs,
+) -> DiscreteOperator:
     """
     Evaluate the differential operator for coupled oscillators.
 
@@ -27,7 +31,7 @@ def evaluate_discrete_operator(adjacency, angular_frequency=1, **kwargs):
         Differential operator for coupled oscillators.
     """
     n = adjacency.shape[0]
-    in_degree = adjacency.sum(axis=1)
+    in_degree = adjacency.sum(axis=1)  # pyright: ignore[reportAttributeAccessIssue]
     if sparse.issparse(adjacency):
         tensor = [
             (None, sparse.eye(n)),  # displacement
@@ -46,12 +50,17 @@ def evaluate_discrete_operator(adjacency, angular_frequency=1, **kwargs):
             ),  # velocity
         ]
 
+    tensor = np.asarray(tensor)
     return DiscreteOperator.from_tensor(tensor, **kwargs)
 
 
 def evaluate_continuous_operator(
-    connectivity, density, dx, angular_frequency=1, **kwargs
-):
+    connectivity: np.ndarray,
+    density: np.ndarray,
+    dx: np.ndarray | float,
+    angular_frequency: np.ndarray | float = 1,
+    **kwargs,
+) -> ContinuousOperator:
     """
     Evaluate the differential operator for opinion averaging on a graph.
 
@@ -73,25 +82,29 @@ def evaluate_continuous_operator(
     operator : ContinuousOperator
         Differential operator for coupled oscillators.
     """
-    weight = [
-        (np.zeros_like(density), np.ones_like(density)),
-        (
-            -(angular_frequency**2)
-            - evaluate_expected_degree(connectivity, density, dx),
-            np.zeros_like(density),
-        ),
-    ]
+    weight = np.asarray(
+        [
+            (np.zeros_like(density), np.ones_like(density)),
+            (
+                -(angular_frequency**2)
+                - evaluate_expected_degree(connectivity, density, dx),
+                np.zeros_like(density),
+            ),
+        ]
+    )
 
     shape = tuple([2, 2] + [1 for _ in range(np.ndim(density))])
     kernel = np.eye(2).reshape(shape) * connectivity
     kernel_weight_x = np.eye(2).reshape(shape) * np.ones_like(density)
-    kernel_weight_y = [
-        (
-            np.zeros_like(density),
-            np.zeros_like(density),
-        ),
-        (density, np.zeros_like(density)),
-    ]
+    kernel_weight_y = np.asarray(
+        [
+            (
+                np.zeros_like(density),
+                np.zeros_like(density),
+            ),
+            (density, np.zeros_like(density)),
+        ]
+    )
 
     return ContinuousOperator(
         weight, kernel, kernel_weight_x, kernel_weight_y, dx, **kwargs

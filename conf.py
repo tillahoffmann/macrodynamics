@@ -1,7 +1,7 @@
-import functools as ft
 import inspect
 from numpydoc import docscrape_sphinx
 import sphinx
+import sphinx.util
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -107,7 +107,7 @@ def autodoc_process_docstring(app, what, name, obj, options, lines):
 
     # Validate the parameters
     documented_parameters = set()
-    for parameter in parsed.get("Parameters"):
+    for parameter in parsed.get("Parameters", []):
         documented_parameters.add(parameter.name)
         assert_standard_sentence(parameter.desc, "parameter", parameter.name, obj)
 
@@ -150,7 +150,7 @@ def autodoc_process_docstring(app, what, name, obj, options, lines):
             for line in source
         )
         returns = parsed.get("Returns")
-        for parameter in parsed.get("Returns"):
+        for parameter in parsed.get("Returns", []):
             assert_standard_sentence(
                 parameter.desc, "return value", parameter.name, obj
             )

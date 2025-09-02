@@ -1,4 +1,5 @@
 import numpy as np
+from typing import cast
 
 from ..util import (
     lazy_property,
@@ -52,7 +53,14 @@ class ContinuousOperator(Operator):
         Spacing between sample points.
     """
 
-    def __init__(self, weight, kernel, kernel_weight_x, kernel_weight_y, dx):
+    def __init__(
+        self,
+        weight: np.ndarray,
+        kernel: np.ndarray,
+        kernel_weight_x: np.ndarray,
+        kernel_weight_y: np.ndarray,
+        dx: np.ndarray | float,
+    ) -> None:
         self.weight = np.asarray(weight)
         self.kernel = np.asarray(kernel)
         self.kernel_weight_x = np.asarray(kernel_weight_x)
@@ -143,32 +151,32 @@ class ContinuousOperator(Operator):
             add_leading_dims(x, 2)
             for x in [weight, kernel, kernel_weight_x, kernel_weight_y]
         ]
-        return cls(*args, dx, **kwargs)
+        return cls(*args, dx, **kwargs)  # pyright: ignore[reportCallIssue]
 
     @lazy_property
-    def shape(self):
+    def shape(self) -> tuple[int, ...]:
         # We have to use the multiplicative weight because the kernel may be larger than
         # the state for non-periodic boundary conditions. Drop the first dimension
         # because it does not represent the shape of the state.
         return self.weight.shape[1:]
 
     @lazy_property
-    def dV(self):
+    def dV(self) -> float:
         """float : Differential volume element."""
-        return np.prod(self.dx)
+        return cast(float, np.prod(self.dx))
 
     @lazy_property
-    def ndim(self):
+    def ndim(self) -> int:
         """int : Spatial dimensionality of the kernel."""
         # Take of two for the leading state dimension
         return self.kernel.ndim - 2
 
     @lazy_property
-    def fft_kernel(self):
+    def fft_kernel(self) -> np.ndarray:
         """numpy.ndarray : Fourier transform of the kernel."""
         return self._evaluate_fft(self.kernel, True)
 
-    def _evaluate_fft(self, x, forward):
+    def _evaluate_fft(self, x: np.ndarray, forward: bool) -> np.ndarray:
         """
         Evaluate the FFT of `x` along the trailing dimensions depending on `forward`.
 
@@ -192,7 +200,7 @@ class ContinuousOperator(Operator):
         else:
             return np.fft.irfftn(x, shape, axes)
 
-    def _evaluate_spatial_axes(self, x):
+    def _evaluate_spatial_axes(self, x: np.ndarray) -> tuple[int, ...]:
         """
         Evaluate the spatial axes of `x` assuming that the spatial dimensions are fully
         determined by the connectivity kernel.
@@ -216,7 +224,7 @@ class ContinuousOperator(Operator):
         ]
 
     @lazy_property
-    def has_analytic_solution(self):
+    def has_analytic_solution(self) -> bool:
         return (
             not self._inhomogeneous_attrs
             and self.kernel_weight_x.shape == self.kernel.shape
@@ -261,15 +269,17 @@ class ContinuousOperator(Operator):
         )
 
     @lazy_property
-    def _fft_eig(self):
+    def _fft_eig(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         # Now we need to diagonalise each element of the big matrix
         evals, evecs = np.linalg.eig(self._fft_operator)
         ievecs = np.linalg.inv(evecs)
         return evals, evecs, ievecs
 
-    def integrate_analytic(self, z, t, control=None):
+    def integrate_analytic(
+        self, z: np.ndarray, t: np.ndarray, control: np.ndarray | None = None
+    ) -> np.ndarray:
         z = self._assert_valid_shape(z)
-        control = self._assert_valid_shape(control)
+        control = self._assert_valid_shape(control, strict=False)
         evals, evecs, ievecs = self._fft_eig
         # Take the fourier transform of the initial state (state_dim, *fourier_dims)
         ft_z = self._evaluate_fft(z, True)
@@ -295,15 +305,17 @@ class ContinuousOperator(Operator):
         z = origin_array(z, self.shape[1:], axes=2 + np.arange(self.ndim))
         return z[-1] if np.isscalar(t) else z
 
-    def _evaluate_dot(self, a, b):
+    def _evaluate_dot(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
         """
         Evaluate the dot product along the leading dimension broadcasting the remainder.
         """
         return np.einsum("ij...,j...->i...", a, b)
 
-    def evaluate_gradient(self, z, t=None, control=None):
+    def evaluate_gradient(
+        self, z: np.ndarray, t: float | None = None, control: np.ndarray | None = None
+    ) -> np.ndarray:
         z = self._assert_valid_shape(z)
-        control = self._assert_valid_shape(control)
+        control = self._assert_valid_shape(control, strict=False)
         # Evaluate the kernel weighted field
         w = self._evaluate_dot(self.kernel_weight_y, z)
         # Compute the FFT of the kernel-weighted field
@@ -322,7 +334,14 @@ class ContinuousOperator(Operator):
             grad += control
         return grad
 
-    def evaluate_control(self, z, setpoint, residual_weight, control_weight, t):
+    def evaluate_control(
+        self,
+        z: np.ndarray,
+        setpoint: np.ndarray,
+        residual_weight: np.ndarray,
+        control_weight: np.ndarray,
+        t: float,
+    ) -> np.ndarray:
         r"""
         Evaluate the optimal control field that minimises the loss function
 
@@ -404,7 +423,7 @@ class ContinuousOperator(Operator):
         return origin_array(control, self.shape[1:], axes=1 + np.arange(self.ndim))
 
     @lazy_property
-    def supramatrix(self):
+    def supramatrix(self) -> np.ndarray:
         """
         numpy.ndarray : Supra operator that encodes the effect of this operator as a
             matrix that can be applied to a ravelled state tensor.
@@ -412,7 +431,7 @@ class ContinuousOperator(Operator):
         # Evaluate the number of states and shape of the state field.
         nstates, *dims = self.shape
         ndims = len(dims)
-        size = np.prod(dims)
+        size = cast(int, np.prod(dims))
         flat_shape = (nstates, nstates, size)
         # Get the indices we need to translate the convolution into a matrix operation.
         indices = np.indices(self.kernel.shape[2:])

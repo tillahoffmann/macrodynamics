@@ -5,7 +5,7 @@ import scipy.integrate
 import scipy.signal
 
 
-def test_eig():
+def test_eig() -> None:
     # Construct a matrix
     x = np.random.normal(0, 1, (50, 50))
     # Get the eigenvalues and eigenvectors
@@ -19,7 +19,7 @@ def test_eig():
 
 
 @pytest.mark.parametrize("method", ["riemann", "trapz"])
-def test_integrate(method):
+def test_integrate(method: str) -> None:
     num_steps = 100
 
     if method == "riemann":
@@ -35,7 +35,7 @@ def test_integrate(method):
 
 
 @pytest.mark.parametrize("n", [10, 11])
-def test_fftconvolve_convolve2d_fill(n):
+def test_fftconvolve_convolve2d_fill(n: int) -> None:
     # Check that fftconvolve and convolve2d produce the same result for zero-padded
     # boundary conditions.
     x, y = np.random.normal(0, 1, (2, n, n))
@@ -44,7 +44,7 @@ def test_fftconvolve_convolve2d_fill(n):
     np.testing.assert_allclose(a, b)
 
 
-def _centered(arr, newsize):
+def _centered(arr: np.ndarray, newsize: tuple | np.ndarray) -> np.ndarray:
     # Return the center newsize portion of the array.
     newsize = np.asarray(newsize)
     currsize = np.array(arr.shape)
@@ -61,7 +61,7 @@ def _centered(arr, newsize):
         [10, 11],
     ),
 )
-def test_convolve2d(boundary, n):
+def test_convolve2d(boundary: str, n: int) -> None:
     """
     This test ensures that we use the fft appropriately.
 
@@ -94,14 +94,15 @@ def test_convolve2d(boundary, n):
 
     # Pad if necessary
     if boundary == "fill":
-        shape = np.asarray(x.shape) + np.asarray(y.shape) - 1
+        shape = tuple(np.asarray(x.shape) + np.asarray(y.shape) - 1)
     else:
         shape = x.shape
 
     # Convolve manually
-    fx = np.fft.rfftn(x, shape)
-    fy = np.fft.rfftn(y, shape)
-    z_actual = np.fft.irfftn(fx * fy, shape)
+    axes = tuple(range(len(shape)))
+    fx = np.fft.rfftn(x, shape, axes=axes)
+    fy = np.fft.rfftn(y, shape, axes=axes)
+    z_actual = np.fft.irfftn(fx * fy, shape, axes=axes)
 
     # Crop (this is a noop if the image already has the right size)
     z_actual = _centered(z_actual, x.shape)

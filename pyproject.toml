@@ -38,6 +38,7 @@ dev = [
     "jupyterlab",
     "numpydoc",
     "pylint",
+    "pyright>=1.1.404",
     "pytest",
     "pytest-cov",
     "ruff>=0.12.11",

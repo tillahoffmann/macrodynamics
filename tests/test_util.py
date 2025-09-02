@@ -133,7 +133,7 @@ def test_edgelist_to_sparse(weight):
     edgelist = np.random.randint(0, num_nodes, (10, 2))
     if callable(weight):
         weight = weight(len(edgelist))
-    dense = np.zeros((num_nodes, num_nodes))
+    dense: np.ndarray = np.zeros((num_nodes, num_nodes))
     i, j = edgelist.T
     dense[i, j] = 1 if weight is None else weight
     sparse_ = md.edgelist_to_sparse(edgelist, num_nodes, weight)

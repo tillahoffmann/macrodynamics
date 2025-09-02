@@ -1,5 +1,6 @@
 import numpy as np
 from scipy import sparse
+from typing import Self, cast
 
 from ..util import lazy_property, nexpm1
 from .operator import Operator
@@ -26,7 +27,9 @@ class DiscreteOperator(Operator):
     details.
     """
 
-    def __init__(self, matrix: np.ndarray, shape: tuple[int, ...]) -> None:
+    def __init__(
+        self, matrix: np.ndarray | sparse.spmatrix, shape: tuple[int, ...]
+    ) -> None:
         self.matrix = matrix
         self._shape = shape
         assert len(self.shape) == 2, "shape must have length two but got %d" % len(
@@ -42,7 +45,7 @@ class DiscreteOperator(Operator):
         )
 
     @classmethod
-    def from_tensor(cls, tensor):
+    def from_tensor(cls, tensor: np.ndarray) -> Self:
         """
         Create a differential operator for vector dynamics from an evolution tensor.
 
@@ -60,7 +63,7 @@ class DiscreteOperator(Operator):
         """
         # Ensure the tensor appears as a list of lists with the right shapes
         k = len(tensor)
-        n = None
+        n: int | None = None
         blocks = []
         issparse = False
         for row in tensor:
@@ -75,15 +78,17 @@ class DiscreteOperator(Operator):
                 tmp.append(block)
             blocks.append(tmp)
 
+        assert n, "The number of nodes `n` could not be inferred. Is the tensor empty?"
+
         # Construct the evoluation matrix
         if issparse:
-            matrix = sparse.bmat(blocks).tocsr()
+            matrix = cast(sparse.csr_matrix, sparse.bmat(blocks).tocsr())
         else:
             matrix = np.block(blocks)
         return cls(matrix, (k, n))
 
     @classmethod
-    def from_matrix(cls, matrix):
+    def from_matrix(cls, matrix) -> Self:
         """
         Create a differential operator for scalar dynamics from an evolution matrix.
 
@@ -101,39 +106,41 @@ class DiscreteOperator(Operator):
         return cls(matrix, (1,) + matrix.shape[:1])
 
     @lazy_property
-    def issparse(self):
+    def issparse(self) -> bool:
         return sparse.issparse(self.matrix)
 
     @lazy_property
-    def shape(self):
+    def shape(self) -> tuple[int, ...]:
         return self._shape
 
     @lazy_property
-    def eig(self):
+    def eig(self) -> tuple[np.ndarray, np.ndarray]:
         """tuple : eigenvalues and eigenvectors of the evolution matrix"""
         if self.issparse:
             return sparse.linalg.eigs(self.matrix)
         else:
-            return np.linalg.eig(self.matrix)
+            return np.linalg.eig(self.matrix)  # pyright: ignore[reportArgumentType,reportCallIssue]
 
     @property
-    def evals(self):
+    def evals(self) -> np.ndarray:
         """numpy.ndarray : eigenvalues of the evolution matrix"""
         return self.eig[0]
 
     @property
-    def evecs(self):
+    def evecs(self) -> np.ndarray:
         """numpy.ndarray : eigenvectors of the evolution matrix"""
         return self.eig[1]
 
     @lazy_property
-    def ievecs(self):
+    def ievecs(self) -> np.ndarray:
         """numpy.ndarray : inverse of the eigenvector matrix of the evolution matrix"""
         return np.linalg.inv(self.evecs)
 
-    def integrate_analytic(self, z, t, control=None):
+    def integrate_analytic(
+        self, z: np.ndarray, t: float | np.ndarray, control: np.ndarray | None = None
+    ) -> np.ndarray:
         z = self._assert_valid_shape(z)
-        control = self._assert_valid_shape(control)
+        control = self._assert_valid_shape(control, strict=False)
         # Project into the diagonal basis.
         z = np.dot(self.ievecs, z.ravel())
         # Evolve the state (which has shape
@@ -150,15 +157,17 @@ class DiscreteOperator(Operator):
         z = np.reshape(z, (-1, *self.shape))
         return z[-1] if np.isscalar(t) else z
 
-    def evaluate_gradient(self, z, t=None, control=None):
+    def evaluate_gradient(
+        self, z: np.ndarray, t=None, control: np.ndarray | None = None
+    ) -> np.ndarray:
         z = self._assert_valid_shape(z)
-        control = self._assert_valid_shape(control)
-        grad = self.matrix.dot(z.ravel())
+        control = self._assert_valid_shape(control, strict=False)
+        grad = self.matrix.dot(z.ravel())  # pyright: ignore[reportAttributeAccessIssue]
         grad = np.reshape(grad, self.shape)
         if control is not None:
             grad += control
         return grad
 
     @property
-    def has_analytic_solution(self):
+    def has_analytic_solution(self) -> bool:
         return not self.issparse

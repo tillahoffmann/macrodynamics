@@ -4,11 +4,11 @@ from scipy import sparse
 from ..structure import evaluate_expected_degree
 from .discrete import DiscreteOperator
 from .continuous import ContinuousOperator
-from ..util import _ignore_scipy_issue_9093
 
 
-@_ignore_scipy_issue_9093
-def evaluate_discrete_operator(adjacency):
+def evaluate_discrete_operator(
+    adjacency: np.ndarray | sparse.spmatrix,
+) -> DiscreteOperator:
     """
     Evaluate the differential operator for opinion averaging on a graph.
 
@@ -23,7 +23,7 @@ def evaluate_discrete_operator(adjacency):
         Differential operator for opinion averaging.
     """
     n = adjacency.shape[0]
-    in_degree = adjacency.sum(axis=1)
+    in_degree = adjacency.sum(axis=1)  # pyright: ignore[reportAttributeAccessIssue]
     # Replace zeros by ones because the corresponding row will only contain zeros anyway
     # and we don't want nans.
     in_degree = np.where(in_degree > 0, in_degree, 1).astype(float)
@@ -34,7 +34,12 @@ def evaluate_discrete_operator(adjacency):
     return DiscreteOperator.from_matrix(matrix)
 
 
-def evaluate_continuous_operator(connectivity, density, dx, **kwargs):
+def evaluate_continuous_operator(
+    connectivity: np.ndarray,
+    density: np.ndarray | float,
+    dx: np.ndarray | float,
+    **kwargs,
+) -> ContinuousOperator:
     """
     Evaluate the differential operator for opinion averaging on a graph.
 

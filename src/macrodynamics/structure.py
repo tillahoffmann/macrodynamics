@@ -3,7 +3,12 @@ from scipy.spatial.distance import squareform
 from .util import convolve
 
 
-def evaluate_distance(x, y, cov=1.0, domain=1.0):
+def evaluate_distance(
+    x: np.ndarray | float,
+    y: np.ndarray | float,
+    cov: np.ndarray | float = 1.0,
+    domain: np.ndarray | None | float = 1.0,
+) -> np.ndarray:
     """
     Evaluate the elementwise Mahalanobis distance between x and y.
 
@@ -25,7 +30,7 @@ def evaluate_distance(x, y, cov=1.0, domain=1.0):
         Non-negative distance array of shape `(...)`.
     """
     # Evaluate the difference
-    delta = x - y
+    delta = np.asarray(x - y)
     if domain is not None:
         domain = np.asarray(domain)
         # If x - y is smaller than -0.5, then x is very far left of y. But in the next
@@ -47,7 +52,13 @@ def evaluate_distance(x, y, cov=1.0, domain=1.0):
     return np.sqrt(np.einsum("...i,ij,...j->...", delta, np.linalg.inv(cov), delta))
 
 
-def evaluate_gaussian_kernel(x, y, norm, cov, domain=1.0):
+def evaluate_gaussian_kernel(
+    x: np.ndarray | float,
+    y: np.ndarray | float,
+    norm: float,
+    cov: np.ndarray | float,
+    domain: float | np.ndarray | None = 1.0,
+) -> np.ndarray:
     """
     Evaluate a Gaussian kernel.
 
