@@ -34,13 +34,13 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "black",
     "flake8",
     "jupyterlab",
     "numpydoc",
     "pylint",
     "pytest",
     "pytest-cov",
+    "ruff>=0.12.11",
     "sphinx",
 ]
 

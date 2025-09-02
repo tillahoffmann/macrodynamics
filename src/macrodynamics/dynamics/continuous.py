@@ -61,15 +61,13 @@ class ContinuousOperator(Operator):
         self.dx = dx * np.ones(self.ndim)
 
         # Validate the shape of the multiplicative weight
-        assert (
-            self.weight.ndim > 2
-        ), "expected at least three-dimensional shape for `weight` but " "got `%s`" % (
-            self.weight.shape,
+        assert self.weight.ndim > 2, (
+            "expected at least three-dimensional shape for `weight` but "
+            "got `%s`" % (self.weight.shape,)
         )
-        assert is_homogeneous(
-            self.weight.shape[:2]
-        ), "leading two dimensions for `weight` must " "be square but got `%s`" % (
-            self.weight.shape,
+        assert is_homogeneous(self.weight.shape[:2]), (
+            "leading two dimensions for `weight` must "
+            "be square but got `%s`" % (self.weight.shape,)
         )
 
         # Validate the shape of the kernel weights
@@ -242,11 +240,12 @@ class ContinuousOperator(Operator):
         for i, arg in enumerate(args):
             axes = self._evaluate_spatial_axes(arg)
             arg = first_element(arg, axes, axes)
-            assert arg.ndim == 2 and is_homogeneous(
-                arg.shape
-            ), "expected square matrix but got shape `%s` for argument %d" % (
-                arg.shape,
-                i,
+            assert arg.ndim == 2 and is_homogeneous(arg.shape), (
+                "expected square matrix but got shape `%s` for argument %d"
+                % (
+                    arg.shape,
+                    i,
+                )
             )
             args[i] = arg
 

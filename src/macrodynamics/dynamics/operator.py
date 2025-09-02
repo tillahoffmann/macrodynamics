@@ -80,11 +80,13 @@ class Operator:
         if z is None:
             return
         z = np.atleast_2d(z)
-        assert (
-            z.shape == self.shape
-        ), "expected state shape `%s` (state dim, *spatial dims) but " "got `%s`" % (
-            self.shape,
-            z.shape,
+        assert z.shape == self.shape, (
+            "expected state shape `%s` (state dim, *spatial dims) but "
+            "got `%s`"
+            % (
+                self.shape,
+                z.shape,
+            )
         )
         return z
 
@@ -127,7 +129,7 @@ class Operator:
             z.ravel(),
             t_eval=times,
             method=method,
-            **kwargs
+            **kwargs,
         )
         # Reshape the flattened array to the desired shape
         z = result.y.T.reshape((-1, *self.shape))

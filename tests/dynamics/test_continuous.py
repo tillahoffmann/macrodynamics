@@ -150,9 +150,9 @@ def test_continuous_diffusion_gradient(
     # Compute the gradient
     grad = continuous_diffusion_operator.evaluate_gradient(initial_conditions)
     # Check that the average gradient is close to zero (total is conserved in diffusion)
-    assert (
-        np.abs(np.mean(grad * density)) < 1e-10
-    ), "average gradient is not close to zero"
+    assert np.abs(np.mean(grad * density)) < 1e-10, (
+        "average gradient is not close to zero"
+    )
 
 
 def test_continuous_diffusion_integration(

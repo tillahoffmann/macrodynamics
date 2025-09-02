@@ -177,9 +177,9 @@ def sample_adjacency(coordinates, kernel, condensed=False, distribution="bernoul
     i, j = np.triu_indices(coordinates.shape[0], 1)
     kernel = kernel(coordinates[i], coordinates[j])
     if distribution == "bernoulli":
-        assert np.all(
-            (kernel >= 0) & (kernel <= 1)
-        ), "kernel values must be in the interval [0, 1]"
+        assert np.all((kernel >= 0) & (kernel <= 1)), (
+            "kernel values must be in the interval [0, 1]"
+        )
         adjacency = np.random.uniform(0, 1, kernel.shape) < kernel
     else:
         raise KeyError(distribution)

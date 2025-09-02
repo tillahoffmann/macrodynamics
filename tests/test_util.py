@@ -55,9 +55,9 @@ def test_map_colors(shape, norm, alpha):
     if not alpha:
         np.testing.assert_equal(colors[..., 3], 1, "unexpected alpha values")
     else:
-        assert np.min(colors[..., 3]) != np.max(
-            colors[..., 3]
-        ), "unexpected alpha values"
+        assert np.min(colors[..., 3]) != np.max(colors[..., 3]), (
+            "unexpected alpha values"
+        )
 
 
 @pytest.mark.parametrize("newshape, axes", [((10, 20, 30), None), ((11, 13), (1, 2))])
