@@ -25,24 +25,19 @@ dependencies = [
     "numpy",
     "scipy",
     "matplotlib",
-    "networkx",
-    "pyproj",
-    "pyshp",
-    "shapely",
-    "tqdm",
 ]
 
 [dependency-groups]
 dev = [
-    "flake8",
     "jupyterlab",
-    "numpydoc",
-    "pylint",
+    "jupytext>=1.17.1",
+    "networkx",
     "pyright>=1.1.404",
-    "pytest",
     "pytest-cov",
+    "pytest",
     "ruff>=0.12.11",
     "sphinx",
+    "numpydoc>=1.7.0",
 ]
 
 [project.urls]
