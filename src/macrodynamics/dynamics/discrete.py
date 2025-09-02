@@ -26,7 +26,7 @@ class DiscreteOperator(Operator):
     details.
     """
 
-    def __init__(self, matrix, shape):
+    def __init__(self, matrix: np.ndarray, shape: tuple[int, ...]) -> None:
         self.matrix = matrix
         self._shape = shape
         assert len(self.shape) == 2, "shape must have length two but got %d" % len(
@@ -112,7 +112,7 @@ class DiscreteOperator(Operator):
     def eig(self):
         """tuple : eigenvalues and eigenvectors of the evolution matrix"""
         if self.issparse:
-            sparse.linalg.eigs(self.matrix)
+            return sparse.linalg.eigs(self.matrix)
         else:
             return np.linalg.eig(self.matrix)
 

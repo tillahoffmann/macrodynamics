@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=42"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "macrodynamics"
+version = "0.1.0"
+description = "A package for macrodynamics modeling and analysis"
+authors = [{name = "Till Hoffmann", email = "till@example.com"}]
+readme = "README.rst"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+dependencies = [
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "networkx",
+    "pyproj",
+    "pyshp",
+    "shapely",
+    "tqdm",
+]
+
+[dependency-groups]
+dev = [
+    "black",
+    "flake8",
+    "jupyterlab",
+    "numpydoc",
+    "pylint",
+    "pytest",
+    "pytest-cov",
+    "sphinx",
+]
+
+[project.urls]
+Homepage = "https://github.com/tillahoffmann/macrodynamics"
+Repository = "https://github.com/tillahoffmann/macrodynamics.git"
+Issues = "https://github.com/tillahoffmann/macrodynamics/issues"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = [
+    "-v",
+    "--cov=macrodynamics",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+]
